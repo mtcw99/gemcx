@@ -25,6 +25,18 @@ static const char *gemini_errorMsgs[GEMINI_PARSER_ERROR__TOTAL] = {
 	[GEMINI_PARSER_ERROR_NO_FILE] = "No files"
 };
 
+static const char *gemini_typeStrName[GEMINI_PARSER_TYPE__TOTAL] = {
+	[GEMINI_PARSER_TYPE_TEXT] = "Text",
+	[GEMINI_PARSER_TYPE_LINK] = "Link",
+	[GEMINI_PARSER_TYPE_HEAD] = "Header",
+	[GEMINI_PARSER_TYPE_LIST] = "List",
+	[GEMINI_PARSER_TYPE_BLOCKQUOTES] = "Blockquotes",
+	[GEMINI_PARSER_TYPE_PREFORMATTED_START] = "Preformatted Start",
+	[GEMINI_PARSER_TYPE_PREFORMATTED] = "Preformatted",
+	[GEMINI_PARSER_TYPE_PREFORMATTED_END] = "Preformatted End",
+	[GEMINI_PARSER_TYPE_LINE] = "Line/Break"
+};
+
 void
 gemini_Parser_init(struct gemini_Parser *parser)
 {
@@ -37,6 +49,23 @@ gemini_Parser_init(struct gemini_Parser *parser)
 void
 gemini_Parser_deinit(struct gemini_Parser *parser)
 {
+	for (uint32_t i = 0; i < parser->length; ++i)
+	{
+		struct gemini_Parser_Line *line = &parser->array[i];
+		switch (line->type)
+		{
+		case GEMINI_PARSER_TYPE_LINK:
+			free(line->content.link.text);
+			free(line->content.link.link);
+			break;
+		case GEMINI_PARSER_TYPE_HEAD:
+			free(line->content.head.text);
+			break;
+		default:
+			free(line->content.text);
+		}
+	}
+
 	free(parser->array);
 	parser->length = 0;
 	parser->alloc = 0;
@@ -86,8 +115,17 @@ gemini_Parser__line(struct gemini_Parser_Line *lineContent,
 					lineLink, lineLinkSize);
 
 			lineContent->type = GEMINI_PARSER_TYPE_LINK;
-			strncpy(lineContent->content.link.link, lineLink, linkSplit);
-			strcpy(lineContent->content.link.text, lineLink + linkSplit);
+			lineContent->content.link.link = calloc(sizeof(char),
+					linkSplit + 1);
+			lineContent->content.link.text = calloc(sizeof(char),
+					lineLinkSize - linkSplit + 1);
+
+			strncpy(lineContent->content.link.link,
+					lineLink,
+					linkSplit);
+			strncpy(lineContent->content.link.text,
+					lineLink + linkSplit,
+					lineLinkSize - linkSplit - 1);
 		}
 		break;
 	case '#':	// Headers
@@ -106,18 +144,19 @@ gemini_Parser__line(struct gemini_Parser_Line *lineContent,
 			lineContent->content.head.level = 1;
 		}
 		lineContent->content.text = calloc(sizeof(char), strlen(line));
-		strcpy(lineContent->content.text, line +
-				lineContent->content.head.level);
+		strncpy(lineContent->content.text, line +
+				lineContent->content.head.level,
+				size - 1 - lineContent->content.head.level);
 	}	break;
 	case '*':	// List
 		lineContent->type = GEMINI_PARSER_TYPE_LIST;
 		lineContent->content.text = calloc(sizeof(char), size);
-		strcpy(lineContent->content.text, line + 1);
+		strncpy(lineContent->content.text, line + 1, size - 2);
 		break;
 	case '>':	// Blockquotes
 		lineContent->type = GEMINI_PARSER_TYPE_BLOCKQUOTES;
 		lineContent->content.text = calloc(sizeof(char), size);
-		strcpy(lineContent->content.text, line + 1);
+		strncpy(lineContent->content.text, line + 1, size - 2);
 		break;
 	case '`':	// Preformatted text
 		if (line[1] == '`' && line[2] == '`')
@@ -129,18 +168,15 @@ gemini_Parser__line(struct gemini_Parser_Line *lineContent,
 			*inPreformatted = !*inPreformatted;
 		}
 		break;
-	case '\n':
+	case '\n':	// Line break
 		lineContent->type = GEMINI_PARSER_TYPE_LINE;
 		break;
-	default:
-		if (*inPreformatted)
-		{
-			lineContent->type = GEMINI_PARSER_TYPE_PREFORMATTED;
-		}
-		else
-		{
-			lineContent->type = GEMINI_PARSER_TYPE_TEXT;
-		}
+	default:	// Normal + Preformatted line
+		lineContent->type = (*inPreformatted) ?
+				GEMINI_PARSER_TYPE_PREFORMATTED :
+				GEMINI_PARSER_TYPE_TEXT;
+		lineContent->content.text = calloc(sizeof(char), size);
+		strncpy(lineContent->content.text, line, size - 1);
 		break;
 	}
 
@@ -157,20 +193,32 @@ gemini_Parser_parse(struct gemini_Parser *parser, const char *fileName)
 	}
 
 	char buffer[PARSER_BUFFER] = { 0 };
-	char *bigBuffer = calloc(sizeof(char), PARSER_BUFFER * 2);
+
 	uint32_t bigBufferAlloc = PARSER_BUFFER * 2;
 	uint32_t bigBufferSize = 0;
+	char *bigBuffer = calloc(sizeof(char), bigBufferAlloc);
+
 	bool inPreformatted = false;
 
 	while (fgets(buffer, PARSER_BUFFER, fp) != NULL)
 	{
 		const uint32_t lineSize = strlen(buffer);
-		strcat(bigBuffer, buffer);
 		bigBufferSize += lineSize;
-
-		if (lineSize != PARSER_BUFFER)
+		if (bigBufferSize > bigBufferAlloc)
 		{
-			gemini_Parser__line(&parser->array[parser->length - 1],
+			bigBufferAlloc += (PARSER_BUFFER * 2);
+			bigBuffer = realloc(bigBuffer, sizeof(char) * 
+					bigBufferAlloc);
+		}
+		strcat(bigBuffer, buffer);
+
+		if (lineSize != (PARSER_BUFFER - 1))
+		{
+			if (parser->length == parser->alloc)
+			{
+				gemini_Parser__expand(parser);
+			}
+			gemini_Parser__line(&parser->array[parser->length],
 					bigBuffer,
 					bigBufferSize,
 					&inPreformatted);
@@ -183,6 +231,98 @@ gemini_Parser_parse(struct gemini_Parser *parser, const char *fileName)
 	free(bigBuffer);
 	fclose(fp);
 	return GEMINI_PARSER_ERROR_NONE;
+}
+
+void
+gemini_Parser_print(const struct gemini_Parser *parser)
+{
+	for (uint32_t i = 0; i < parser->length; ++i)
+	{
+		const struct gemini_Parser_Line *line = &parser->array[i];
+		printf("(%s) ", gemini_typeStrName[line->type]);
+		switch (line->type)
+		{
+		case GEMINI_PARSER_TYPE_LINK:
+			printf("%s => %s", line->content.link.text,
+					line->content.link.link);
+			break;
+		case GEMINI_PARSER_TYPE_HEAD:
+			printf("[%d] %s", line->content.head.level,
+					line->content.head.text);
+			break;
+		case GEMINI_PARSER_TYPE_LINE:
+		case GEMINI_PARSER_TYPE_PREFORMATTED_START:
+		case GEMINI_PARSER_TYPE_PREFORMATTED_END:
+			break;
+		default:
+			printf("%s", line->content.text);
+			break;
+		}
+		putchar('\n');
+	}
+}
+
+void
+gemini_Parser_render(const struct gemini_Parser *parser)
+{
+	for (uint32_t i = 0; i < parser->length; ++i)
+	{
+		const struct gemini_Parser_Line *line = &parser->array[i];
+
+		if (line->type == GEMINI_PARSER_TYPE_PREFORMATTED_START ||
+				line->type == GEMINI_PARSER_TYPE_PREFORMATTED_END)
+		{
+			continue;
+		}
+
+		// Prefix
+		switch (line->type)
+		{
+		case GEMINI_PARSER_TYPE_LINK:
+			printf("-> ");
+			break;
+		case GEMINI_PARSER_TYPE_BLOCKQUOTES:
+			printf("| ");
+			break;
+		case GEMINI_PARSER_TYPE_LIST:
+			printf(" * ");
+			break;
+		case GEMINI_PARSER_TYPE_HEAD:
+			for (uint32_t h = 0; h < line->content.head.level; ++h)
+			{
+				putchar('#');
+			}
+			putchar(' ');
+			break;
+		default:
+			break;
+		}
+
+		// Content
+		switch (line->type)
+		{
+		case GEMINI_PARSER_TYPE_LINK:
+			if (line->content.link.text[0] == '\0')
+			{
+				printf("%s", line->content.link.link);
+			}
+			else
+			{
+				printf("%s (%s)", line->content.link.text,
+						line->content.link.link);
+			}
+			break;
+		case GEMINI_PARSER_TYPE_HEAD:
+			printf("%s", line->content.head.text);
+			break;
+		case GEMINI_PARSER_TYPE_LINE:
+			break;
+		default:
+			printf("%s", line->content.text);
+			break;
+		}
+		putchar('\n');
+	}
 }
 
 const char *

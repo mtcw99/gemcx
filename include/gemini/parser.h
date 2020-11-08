@@ -61,6 +61,8 @@ void gemini_Parser_init(struct gemini_Parser *parser);
 void gemini_Parser_deinit(struct gemini_Parser *parser);
 enum gemini_Parser_Error gemini_Parser_parse(struct gemini_Parser *parser,
 	const char *fileName);
+void gemini_Parser_print(const struct gemini_Parser *parser);
+void gemini_Parser_render(const struct gemini_Parser *parser);
 
 const char *gemini_Parser_errorMsg(const enum gemini_Parser_Error error);
 
