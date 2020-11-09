@@ -17,9 +17,10 @@ Here is a quote:
 > I contend that text-based websites should not exceed in size the major works of Russian literature.
 
 ```
-S N E E D
-    F E E D
-        A N D
-    S E E D
+A B C
+ D E F
+  G H
+   Z Y X 1 2 3
+   00000000000
 ```
 
