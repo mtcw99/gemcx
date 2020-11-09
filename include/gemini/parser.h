@@ -1,6 +1,7 @@
-#ifndef PARSER_H
-#define PARSER_H
+#ifndef GEMINI_PARSER_H
+#define GEMINI_PARSER_H
 
+#include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -61,10 +62,12 @@ void gemini_Parser_init(struct gemini_Parser *parser);
 void gemini_Parser_deinit(struct gemini_Parser *parser);
 enum gemini_Parser_Error gemini_Parser_parse(struct gemini_Parser *parser,
 	const char *fileName);
+enum gemini_Parser_Error gemini_Parser_parseFp(struct gemini_Parser *parser,
+	FILE *fp);
 void gemini_Parser_print(const struct gemini_Parser *parser);
 void gemini_Parser_render(const struct gemini_Parser *parser);
 
 const char *gemini_Parser_errorMsg(const enum gemini_Parser_Error error);
 
-#endif // PARSER_H
+#endif // GEMINI_PARSER_H
 

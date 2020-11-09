@@ -61,8 +61,15 @@ gemini_Parser_deinit(struct gemini_Parser *parser)
 		case GEMINI_PARSER_TYPE_HEAD:
 			free(line->content.head.text);
 			break;
+		case GEMINI_PARSER_TYPE_LINE:
+		case GEMINI_PARSER_TYPE_PREFORMATTED_START:
+		case GEMINI_PARSER_TYPE_PREFORMATTED_END:
+			break;
 		default:
-			free(line->content.text);
+			if (line->content.text != NULL)
+			{
+				free(line->content.text);
+			}
 		}
 	}
 
@@ -75,7 +82,8 @@ static void
 gemini_Parser__expand(struct gemini_Parser *parser)
 {
 	parser->alloc += LINE_ALLOC;
-	parser->array = calloc(sizeof(struct gemini_Parser_Line),
+	parser->array = realloc(parser->array,
+			sizeof(struct gemini_Parser_Line) *
 			parser->alloc);
 }
 
@@ -184,14 +192,9 @@ gemini_Parser__line(struct gemini_Parser_Line *lineContent,
 }
 
 enum gemini_Parser_Error
-gemini_Parser_parse(struct gemini_Parser *parser, const char *fileName)
+gemini_Parser_parseFp(struct gemini_Parser *parser,
+	FILE *fp)
 {
-	FILE *fp = fopen(fileName, "r");
-	if (fp == NULL)
-	{
-		return GEMINI_PARSER_ERROR_NO_FILE;
-	}
-
 	char buffer[PARSER_BUFFER] = { 0 };
 
 	uint32_t bigBufferAlloc = PARSER_BUFFER * 2;
@@ -203,6 +206,10 @@ gemini_Parser_parse(struct gemini_Parser *parser, const char *fileName)
 	while (fgets(buffer, PARSER_BUFFER, fp) != NULL)
 	{
 		const uint32_t lineSize = strlen(buffer);
+#if 0
+		printf("lineSize: %d | buffer: %s", lineSize, buffer);
+#endif
+
 		bigBufferSize += lineSize;
 		if (bigBufferSize > bigBufferAlloc)
 		{
@@ -218,6 +225,7 @@ gemini_Parser_parse(struct gemini_Parser *parser, const char *fileName)
 			{
 				gemini_Parser__expand(parser);
 			}
+			//printf("Line: %s", bigBuffer);
 			gemini_Parser__line(&parser->array[parser->length],
 					bigBuffer,
 					bigBufferSize,
@@ -229,8 +237,21 @@ gemini_Parser_parse(struct gemini_Parser *parser, const char *fileName)
 	}
 
 	free(bigBuffer);
-	fclose(fp);
 	return GEMINI_PARSER_ERROR_NONE;
+}
+
+enum gemini_Parser_Error
+gemini_Parser_parse(struct gemini_Parser *parser, const char *fileName)
+{
+	FILE *fp = fopen(fileName, "r");
+	if (fp == NULL)
+	{
+		return GEMINI_PARSER_ERROR_NO_FILE;
+	}
+
+	enum gemini_Parser_Error errCode = gemini_Parser_parseFp(parser, fp);
+	free(fp);
+	return errCode;
 }
 
 void
