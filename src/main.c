@@ -4,6 +4,7 @@
 
 #include "gemini/parser.h"
 #include "gemini/client.h"
+#include "gemini/header.h"
 
 int
 main(int argc, char **argv)
@@ -31,12 +32,18 @@ main(int argc, char **argv)
 		return 1;
 	}
 
+#if 0
 	rewind(tmpf);
 	char header[1027] = { 0 };
 	if (fgets(header, 1027, tmpf) != NULL)
 	{
 		printf("header: %s\n", header);
 	}
+#else
+	struct gemini_Header header = { 0 };
+	gemini_Header_get(&header, tmpf);
+	gemini_Header_print(&header);
+#endif
 
 	struct gemini_Parser parser = { 0 };
 	gemini_Parser_init(&parser);
@@ -61,6 +68,12 @@ main(int argc, char **argv)
 
 	fclose(givenFile);
 #endif
+
+	gemini_Header_print(&header);
+	if (gemini_Header_isGemini(&header))
+	{
+		printf("Gemini header\n");
+	}
 
 	fclose(tmpf);
 	return 0;

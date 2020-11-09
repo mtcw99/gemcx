@@ -132,6 +132,7 @@ gemini_Client_init(struct gemini_Client *client, const char *uri)
 void
 gemini_Client_deinit(struct gemini_Client *client)
 {
+	(void) client;
 }
 
 void *
@@ -202,6 +203,9 @@ gemini_Client__socketConn(struct gemini_Client *client, int32_t *sockfd)
 int32_t
 gemini_Client__verifyCallback(int32_t preverify, X509_STORE_CTX *x509_ctx)
 {
+	(void) preverify;
+	(void) x509_ctx;
+#if 0
 	int32_t depth = X509_STORE_CTX_get_error_depth(x509_ctx);
 	int32_t err = X509_STORE_CTX_get_error(x509_ctx);
 
@@ -211,7 +215,7 @@ gemini_Client__verifyCallback(int32_t preverify, X509_STORE_CTX *x509_ctx)
 	(void) iname;
 	(void) sname;
 	printf("preverify: %d\n", preverify);
-
+#endif
 	return 1;
 }
 
