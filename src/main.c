@@ -97,8 +97,12 @@ main(int argc, char **argv)
 	struct ui_xcb_Event event = { 0 };
 	ui_xcb_Event_init(&event, context.connection);
 
-	struct ui_xcb_Text text = { 0 };
-	ui_xcb_Text_init(&text, &context, "Noto Sans Normal 12");
+	struct ui_xcb_Text text[5] = { 0 };
+	ui_xcb_Text_init(&text[0], &context, "noto sans normal 12");
+	ui_xcb_Text_init(&text[1], &context, "noto sans bold 24");	// H1
+	ui_xcb_Text_init(&text[2], &context, "noto sans bold 18");	// H2
+	ui_xcb_Text_init(&text[3], &context, "noto sans bold 14");	// H3
+	ui_xcb_Text_init(&text[4], &context, "Liberation Mono 12");	// Preform
 
 	struct ui_xcb_Pixmap doubleBuffer = { 0 };
 	ui_xcb_Pixmap_init(&doubleBuffer, &context, window.id, 1920, 1080, 0x000000);
@@ -139,7 +143,7 @@ main(int argc, char **argv)
 
 			if (prevWidth != cnEvent->width)
 			{
-				mainAreaXMax = resizeMainContent(&mainArea, &text, &parser, cnEvent->width - 100);
+				mainAreaXMax = resizeMainContent(&mainArea, text, &parser, cnEvent->width - 100);
 				ui_xcb_Pixmap_render(&mainArea, 0, 0);
 				mainAreaXMaxDuringRZ = mainAreaXMax;
 			}
@@ -189,6 +193,9 @@ main(int argc, char **argv)
 				break;
 			}
 		}	break;
+		case XCB_KEY_PRESS:
+		{
+		}	break;
 		default:
 			break;
 		}
@@ -196,7 +203,10 @@ main(int argc, char **argv)
 
 	ui_xcb_Pixmap_deinit(&doubleBuffer);
 	ui_xcb_Pixmap_deinit(&mainArea);
-	ui_xcb_Text_deinit(&text);
+	for (uint32_t i = 0; i < 5; ++i)
+	{
+		ui_xcb_Text_deinit(&text[i]);
+	}
 	ui_xcb_Event_deinit(&event);
 	ui_xcb_Window_deinit(&window);
 	ui_xcb_Context_deinit(&context);
@@ -222,34 +232,36 @@ resizeMainContent(struct ui_xcb_Pixmap *mainArea,
 		switch (line->type)
 		{
 		case GEMINI_PARSER_TYPE_HEAD:
-			ui_xcb_Text_render(text,
-					mainArea->pixmap,
-					"#",
-					10, pY, 0xFFFFFF, 1);
-
-			ui_xcb_Text_render(text,
+			ui_xcb_Text_render(&text[line->content.head.level],
 					mainArea->pixmap,
 					line->content.head.text,
-					20, pY, 0xFFFFFF, 1);
+					10, pY, 0xFFFFFF, 1);
+			switch (line->content.head.level)
+			{
+			case 1:	pY += 35; break;
+			case 2:	pY += 25; break;
+			case 3:	pY += 15; break;
+			default:	break;
+			}
 			break;
 		case GEMINI_PARSER_TYPE_LINK:
-			ui_xcb_Text_render(text,
+			ui_xcb_Text_render(&text[0],
 					mainArea->pixmap,
 					"=>",
 					10, pY, 0xFFFFFF, 1);
 
-			ui_xcb_Text_render(text,
+			ui_xcb_Text_render(&text[0],
 					mainArea->pixmap,
 					line->content.link.text,
 					25, pY, 0xFFFFFF, 1);
 			break;
 		case GEMINI_PARSER_TYPE_LIST:
-			ui_xcb_Text_render(text,
+			ui_xcb_Text_render(&text[0],
 					mainArea->pixmap,
 					"*",
 					10, pY, 0xFFFFFF, 1);
 
-			ui_xcb_Text_render(text,
+			ui_xcb_Text_render(&text[0],
 					mainArea->pixmap,
 					line->content.link.text,
 					20, pY, 0xFFFFFF, 1);
@@ -258,15 +270,17 @@ resizeMainContent(struct ui_xcb_Pixmap *mainArea,
 		case GEMINI_PARSER_TYPE_TEXT:
 		case GEMINI_PARSER_TYPE_BLOCKQUOTES:
 		{
-			const double addY = ui_xcb_Text_renderWrapped(text,
+			const double addY = ui_xcb_Text_renderWrapped(&text[0],
 					mainArea->pixmap,
 					line->content.text,
-					10, pY, 0xFFFFFF, 1, width);
+					10, pY,
+					(line->type == GEMINI_PARSER_TYPE_TEXT) ? 0xFFFFFF : 0xAAAAAA,
+					1, width);
 
 			pY += addY - 15;
 		}	break;
 		case GEMINI_PARSER_TYPE_PREFORMATTED:
-			ui_xcb_Text_render(text,
+			ui_xcb_Text_render(&text[4],
 					mainArea->pixmap,
 					line->content.text,
 					10, pY, 0xFFFFFF, 1);

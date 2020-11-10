@@ -108,6 +108,7 @@ ui_xcb_Text_render(struct ui_xcb_Text *text,
 	cairo_surface_flush(text->cr_surface);
 }
 
+// TODO FIX: Wrapping off-screen-width bug
 double
 ui_xcb_Text_renderWrapped(struct ui_xcb_Text *text,
 		const xcb_drawable_t drawable,
@@ -129,14 +130,14 @@ ui_xcb_Text_renderWrapped(struct ui_xcb_Text *text,
 		switch (str[i])
 		{
 		case ' ':
-			whsp[whspSize++] = i;
-			break;
 		case '\n':
 			whsp[whspSize++] = i;
+			break;
 		default:
 			break;
 		}
 	}
+	whsp[whspSize++] = strSize;
 
 	char *tmpStr = calloc(sizeof(char), strSize + 1);
 	uint32_t splitIdx[128] = { 0 };
@@ -146,8 +147,8 @@ ui_xcb_Text_renderWrapped(struct ui_xcb_Text *text,
 	for (uint32_t i = 0; i < whspSize; ++i)
 	{
 		const uint32_t whspIdx = whsp[i];
-		strncpy(tmpStr, str, whspIdx + 1);
-		tmpStr[whspIdx + 1] = '\0';
+		strncpy(tmpStr, str, whspIdx);
+		tmpStr[whspIdx] = '\0';
 
 		pango_layout_set_text(text->pa_layout, tmpStr, -1);
 		cairo_move_to(text->cr, 0, 0);
@@ -162,6 +163,8 @@ ui_xcb_Text_renderWrapped(struct ui_xcb_Text *text,
 			nextMaxWidth += maxWidth;
 		}
 	}
+
+	splitIdx[splitIdxSize++] = strSize;
 
 	double wrY = y;
 	for (uint32_t i = 0; i < splitIdxSize; ++i)

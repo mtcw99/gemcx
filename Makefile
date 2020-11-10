@@ -21,7 +21,8 @@ endef
 SRC := $(strip ${SRC})
 
 CC = cc
-CFLAGS = -std=c99 -pedantic -Wall -Os -g
+#CFLAGS = -std=c99 -pedantic -Wall -Os -g
+CFLAGS = -std=c99 -pedantic -Wall -Os -flto
 INCLUDEDIR = include/
 LIBS = -D_POSIX_C_SOURCE=200809L -lssl -lcrypto -lxcb -lxkbcommon -lxkbcommon-x11
 PKG = pangocairo fontconfig
