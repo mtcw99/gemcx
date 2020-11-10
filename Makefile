@@ -1,9 +1,26 @@
 NAME = gemcx
-SRC = src/main.c src/gemini/client.c src/gemini/header.c src/gemini/parser.c
+
+define \n
+
+endef
+
+define SRC
+src/main.c
+src/gemini/client.c
+src/gemini/header.c
+src/gemini/parser.c
+src/ui/xcb/context.c
+src/ui/xcb/key.c
+src/ui/xcb/window.c
+src/util/memory.c
+endef
+
+SRC := $(strip ${SRC})
+
 CC = cc
-CFLAGS = -std=c99 -pedantic -Wall -Os
+CFLAGS = -std=c99 -pedantic -Wall -Os -g
 INCLUDEDIR = include/
-LIBS = -D_POSIX_C_SOURCE=200809L -lssl -lcrypto
+LIBS = -D_POSIX_C_SOURCE=200809L -lssl -lcrypto -lxcb -lxkbcommon -lxkbcommon-x11
 VERSION = 0.1
 PREFIX = /usr/local
 DISTDIR = ${NAME}-${VERSION}

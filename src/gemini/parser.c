@@ -5,6 +5,8 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "util/memory.h"
+
 #define PARSER_BUFFER 1024
 #define LINE_ALLOC 32
 
@@ -41,7 +43,7 @@ void
 gemini_Parser_init(struct gemini_Parser *parser)
 {
 	parser->alloc = LINE_ALLOC;
-	parser->array = calloc(sizeof(struct gemini_Parser_Line),
+	parser->array = util_memory_calloc(sizeof(struct gemini_Parser_Line),
 			parser->alloc);
 	parser->length = 0;
 }
@@ -55,11 +57,11 @@ gemini_Parser_deinit(struct gemini_Parser *parser)
 		switch (line->type)
 		{
 		case GEMINI_PARSER_TYPE_LINK:
-			free(line->content.link.text);
-			free(line->content.link.link);
+			util_memory_free(line->content.link.text);
+			util_memory_free(line->content.link.link);
 			break;
 		case GEMINI_PARSER_TYPE_HEAD:
-			free(line->content.head.text);
+			util_memory_free(line->content.head.text);
 			break;
 		case GEMINI_PARSER_TYPE_LINE:
 		case GEMINI_PARSER_TYPE_PREFORMATTED_START:
@@ -68,21 +70,20 @@ gemini_Parser_deinit(struct gemini_Parser *parser)
 		default:
 			if (line->content.text != NULL)
 			{
-				free(line->content.text);
+				util_memory_free(line->content.text);
 			}
 		}
 	}
 
-	free(parser->array);
+	util_memory_free(parser->array);
 	parser->length = 0;
 	parser->alloc = 0;
-}
-
+} 
 static void
 gemini_Parser__expand(struct gemini_Parser *parser)
 {
 	parser->alloc += LINE_ALLOC;
-	parser->array = realloc(parser->array,
+	parser->array = util_memory_realloc(parser->array,
 			sizeof(struct gemini_Parser_Line) *
 			parser->alloc);
 }
@@ -123,9 +124,9 @@ gemini_Parser__line(struct gemini_Parser_Line *lineContent,
 					lineLink, lineLinkSize);
 
 			lineContent->type = GEMINI_PARSER_TYPE_LINK;
-			lineContent->content.link.link = calloc(sizeof(char),
+			lineContent->content.link.link = util_memory_calloc(sizeof(char),
 					linkSplit + 1);
-			lineContent->content.link.text = calloc(sizeof(char),
+			lineContent->content.link.text = util_memory_calloc(sizeof(char),
 					lineLinkSize - linkSplit + 1);
 
 			strncpy(lineContent->content.link.link,
@@ -151,19 +152,19 @@ gemini_Parser__line(struct gemini_Parser_Line *lineContent,
 		{
 			lineContent->content.head.level = 1;
 		}
-		lineContent->content.text = calloc(sizeof(char), strlen(line));
+		lineContent->content.text = util_memory_calloc(sizeof(char), strlen(line));
 		strncpy(lineContent->content.text, line +
 				lineContent->content.head.level,
 				size - 1 - lineContent->content.head.level);
 	}	break;
 	case '*':	// List
 		lineContent->type = GEMINI_PARSER_TYPE_LIST;
-		lineContent->content.text = calloc(sizeof(char), size);
+		lineContent->content.text = util_memory_calloc(sizeof(char), size);
 		strncpy(lineContent->content.text, line + 1, size - 2);
 		break;
 	case '>':	// Blockquotes
 		lineContent->type = GEMINI_PARSER_TYPE_BLOCKQUOTES;
-		lineContent->content.text = calloc(sizeof(char), size);
+		lineContent->content.text = util_memory_calloc(sizeof(char), size);
 		strncpy(lineContent->content.text, line + 1, size - 2);
 		break;
 	case '`':	// Preformatted text
@@ -183,7 +184,7 @@ gemini_Parser__line(struct gemini_Parser_Line *lineContent,
 		lineContent->type = (*inPreformatted) ?
 				GEMINI_PARSER_TYPE_PREFORMATTED :
 				GEMINI_PARSER_TYPE_TEXT;
-		lineContent->content.text = calloc(sizeof(char), size);
+		lineContent->content.text = util_memory_calloc(sizeof(char), size);
 		strncpy(lineContent->content.text, line, size - 1);
 		break;
 	}
@@ -193,13 +194,13 @@ gemini_Parser__line(struct gemini_Parser_Line *lineContent,
 
 enum gemini_Parser_Error
 gemini_Parser_parseFp(struct gemini_Parser *parser,
-	FILE *fp)
+		FILE *fp)
 {
 	char buffer[PARSER_BUFFER] = { 0 };
 
 	uint32_t bigBufferAlloc = PARSER_BUFFER * 2;
 	uint32_t bigBufferSize = 0;
-	char *bigBuffer = calloc(sizeof(char), bigBufferAlloc);
+	char *bigBuffer = util_memory_calloc(sizeof(char), bigBufferAlloc);
 
 	bool inPreformatted = false;
 
@@ -214,7 +215,7 @@ gemini_Parser_parseFp(struct gemini_Parser *parser,
 		if (bigBufferSize > bigBufferAlloc)
 		{
 			bigBufferAlloc += (PARSER_BUFFER * 2);
-			bigBuffer = realloc(bigBuffer, sizeof(char) * 
+			bigBuffer = util_memory_realloc(bigBuffer, sizeof(char) * 
 					bigBufferAlloc);
 		}
 		strcat(bigBuffer, buffer);
@@ -236,7 +237,7 @@ gemini_Parser_parseFp(struct gemini_Parser *parser,
 		}
 	}
 
-	free(bigBuffer);
+	util_memory_free(bigBuffer);
 	return GEMINI_PARSER_ERROR_NONE;
 }
 
@@ -250,7 +251,7 @@ gemini_Parser_parse(struct gemini_Parser *parser, const char *fileName)
 	}
 
 	enum gemini_Parser_Error errCode = gemini_Parser_parseFp(parser, fp);
-	free(fp);
+	fclose(fp);
 	return errCode;
 }
 
