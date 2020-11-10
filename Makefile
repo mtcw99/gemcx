@@ -12,6 +12,9 @@ src/gemini/parser.c
 src/ui/xcb/context.c
 src/ui/xcb/key.c
 src/ui/xcb/window.c
+src/ui/xcb/event.c
+src/ui/xcb/text.c
+src/ui/xcb/pixmap.c
 src/util/memory.c
 endef
 
@@ -21,13 +24,15 @@ CC = cc
 CFLAGS = -std=c99 -pedantic -Wall -Os -g
 INCLUDEDIR = include/
 LIBS = -D_POSIX_C_SOURCE=200809L -lssl -lcrypto -lxcb -lxkbcommon -lxkbcommon-x11
+PKG = pangocairo fontconfig
+PKGCFG = `pkg-config --libs --cflags ${PKG}`
 VERSION = 0.1
 PREFIX = /usr/local
 DISTDIR = ${NAME}-${VERSION}
 
-${NAME}: ${SRC}
+build/${NAME}: ${SRC}
 	@mkdir -p build/
-	@${CC} -o build/${NAME} ${CFLAGS} ${SRC} -I${INCLUDEDIR} ${LIBS}
+	@${CC} -o build/${NAME} ${CFLAGS} ${SRC} -I${INCLUDEDIR} ${PKGCFG} ${LIBS}
 	@echo "executable in build/${NAME}"
 
 clean:
