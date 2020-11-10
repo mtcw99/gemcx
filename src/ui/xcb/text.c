@@ -40,6 +40,37 @@ ui_xcb_Text_init(struct ui_xcb_Text *text,
 	pango_font_description_free(pa_desc);
 	pa_desc = NULL;
 
+	// Calculate symbols lengths
+	
+	char tmpStr[4] = { '\0' };
+	tmpStr[0] = 'A';
+	tmpStr[1] = 'A';
+	int32_t width = 0;
+	// Set base width
+	pango_layout_set_text(text->pa_layout, tmpStr, -1);
+	cairo_move_to(text->cr, 0, 0);
+	pango_cairo_update_layout(text->cr, text->pa_layout);
+	pango_layout_get_pixel_size(text->pa_layout, &width, NULL);
+	const uint32_t baseWidth = width;
+	text->mostSymbolsWidth = 0;
+
+	for (uint32_t c = ' '; c < 127; ++c)
+	{
+		tmpStr[2] = c;
+		pango_layout_set_text(text->pa_layout, tmpStr, -1);
+		cairo_move_to(text->cr, 0, 0);
+		pango_cairo_update_layout(text->cr, text->pa_layout);
+		pango_layout_get_pixel_size(text->pa_layout, &width, NULL);
+
+		text->symbolsWidth[c] = width - baseWidth;
+		//printf("%c width: %d\n", c, text->symbolsWidth[c]);
+
+		if (text->symbolsWidth[c] > text->mostSymbolsWidth)
+		{
+			text->mostSymbolsWidth = text->symbolsWidth[c];
+		}
+	}
+
 	text->context = context;
 }
 
@@ -117,68 +148,75 @@ ui_xcb_Text_renderWrapped(struct ui_xcb_Text *text,
 		const double y,
 		const uint32_t color,
 		const double alpha,
-		const uint32_t maxWidth)
+		const uint32_t maxWidth,
+		const uint32_t spacing)
 {
 	const uint32_t strSize = strlen(str);
-	int32_t width, height;
-	uint32_t whsp[128] = { 0 };
-	uint32_t whspSize = 0;
-
-	// Find whitespaces
-	for (uint32_t i = 0; i < strSize; ++i)
-	{
-		switch (str[i])
-		{
-		case ' ':
-		case '\n':
-			whsp[whspSize++] = i;
-			break;
-		default:
-			break;
-		}
-	}
-	whsp[whspSize++] = strSize;
+	uint32_t width = 0;
 
 	char *tmpStr = calloc(sizeof(char), strSize + 1);
+	strcpy(tmpStr, str);
 	uint32_t splitIdx[128] = { 0 };
 	uint32_t splitIdxSize = 0;
 	uint32_t nextMaxWidth = maxWidth;
+	double wrY = y;
 
-	for (uint32_t i = 0; i < whspSize; ++i)
+	for (uint32_t i = 0, prevWS = 0; i < strSize; ++i)
 	{
-		const uint32_t whspIdx = whsp[i];
-		strncpy(tmpStr, str, whspIdx);
+		if ((uint32_t) str[i] < 127)
+		{
+			width += text->symbolsWidth[(uint32_t) str[i]];
+		}
+		else
+		{
+			width += text->mostSymbolsWidth;
+		}
+
+		if (str[i] != ' ' && str[i] != '\n')
+		{
+			continue;
+		}
+
+		const uint32_t whspIdx = i;
 		tmpStr[whspIdx] = '\0';
 
-		pango_layout_set_text(text->pa_layout, tmpStr, -1);
-		cairo_move_to(text->cr, 0, 0);
-		pango_cairo_update_layout(text->cr, text->pa_layout);
-		pango_layout_get_pixel_size(text->pa_layout, &width, &height);
 		if ((width >= nextMaxWidth) && (i > 0))
 		{
 #if 0
 			printf("(%d/%d) [%d] tmpStr: %s\n", width, nextMaxWidth, i -1, tmpStr);
 #endif
-			splitIdx[splitIdxSize++] = whsp[i - 1];
+			const uint32_t splIndex = splitIdxSize;
+			splitIdx[splitIdxSize++] = prevWS;
 			nextMaxWidth += maxWidth;
+
+			const uint32_t strIdxL = (splIndex == 0) ? 0 : (splitIdx[splIndex - 1] + 1);
+			const uint32_t strIdxR = splitIdx[splIndex];
+			const uint32_t splLen = strIdxR - strIdxL;
+
+			//printf("SPLIT at: %d - %d (%d)\n", strIdxL, strIdxR, splLen);
+			//strncpy(tmpStr, str + strIdxL, splLen);
+			tmpStr[splLen + strIdxL] = '\0';
+			ui_xcb_Text_render(text, drawable,
+					tmpStr + strIdxL, x, wrY, color, alpha);
+			wrY += spacing; // spacing
+			tmpStr[splLen + strIdxL] = ' ';
 		}
+		tmpStr[whspIdx] = ' ';
+		prevWS = whspIdx;
 	}
 
+	const uint32_t splIndex = splitIdxSize;
 	splitIdx[splitIdxSize++] = strSize;
+	const uint32_t strIdxL = (splIndex == 0) ? 0 : (splitIdx[splIndex - 1] + 1);
+	const uint32_t strIdxR = splitIdx[splIndex];
+	const uint32_t splLen = strIdxR - strIdxL;
 
-	double wrY = y;
-	for (uint32_t i = 0; i < splitIdxSize; ++i)
-	{
-		const uint32_t strIdxL = (i == 0) ? 0 : (splitIdx[i - 1] + 1);
-		const uint32_t strIdxR = splitIdx[i];
-		const uint32_t splLen = strIdxR - strIdxL;
-
-		//printf("SPLIT at: %d - %d (%d)\n", strIdxL, strIdxR, splLen);
-		strncpy(tmpStr, str + strIdxL, splLen);
-		tmpStr[splLen] = '\0';
-		ui_xcb_Text_render(text, drawable, tmpStr, x, wrY, color, alpha);
-		wrY += 15; // spacing
-	}
+	//printf("SPLIT at: %d - %d (%d)\n", strIdxL, strIdxR, splLen);
+	//strncpy(tmpStr, str + strIdxL, splLen);
+	tmpStr[splLen + strIdxL] = '\0';
+	ui_xcb_Text_render(text, drawable,
+			tmpStr + strIdxL, x, wrY, color, alpha);
+	wrY += spacing; // spacing
 
 	free(tmpStr);
 

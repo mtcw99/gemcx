@@ -19,6 +19,8 @@ struct ui_xcb_Text
 	cairo_t		*cr;
 	PangoLayout	*pa_layout;
 	struct ui_xcb_Context	*context;
+	uint32_t	symbolsWidth[128];
+	uint32_t	mostSymbolsWidth;
 };
 
 void ui_xcb_Text_init(struct ui_xcb_Text *text, struct ui_xcb_Context *context,
@@ -41,7 +43,8 @@ double ui_xcb_Text_renderWrapped(struct ui_xcb_Text *text,
 		const double y,
 		const uint32_t color,
 		const double alpha,
-		const uint32_t maxWidth);
+		const uint32_t maxWidth,
+		const uint32_t spacing);
 
 #endif // UI_XCB_TEXT_H
 

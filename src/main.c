@@ -14,7 +14,9 @@
 uint32_t resizeMainContent(struct ui_xcb_Pixmap *mainArea,
 		struct ui_xcb_Text *text,
 		const struct gemini_Parser *parser,
-		const uint32_t width);
+		const uint32_t width,
+		const uint32_t height,
+		const uint32_t yOffset);
 
 int
 main(int argc, char **argv)
@@ -97,21 +99,31 @@ main(int argc, char **argv)
 	struct ui_xcb_Event event = { 0 };
 	ui_xcb_Event_init(&event, context.connection);
 
+	const char *fontConfigs[5] = {
+		"noto sans normal 12",
+		"noto sans bold 24",
+		"noto sans bold 18",
+		"noto sans bold 14",
+		"liberation mono 12"
+	};
 	struct ui_xcb_Text text[5] = { 0 };
-	ui_xcb_Text_init(&text[0], &context, "noto sans normal 12");
-	ui_xcb_Text_init(&text[1], &context, "noto sans bold 24");	// H1
-	ui_xcb_Text_init(&text[2], &context, "noto sans bold 18");	// H2
-	ui_xcb_Text_init(&text[3], &context, "noto sans bold 14");	// H3
-	ui_xcb_Text_init(&text[4], &context, "Liberation Mono 12");	// Preform
+	for (uint32_t i = 0; i < 5; ++i)
+	{
+		ui_xcb_Text_init(&text[i], &context, fontConfigs[i]);
+	}
 
 	struct ui_xcb_Pixmap doubleBuffer = { 0 };
 	ui_xcb_Pixmap_init(&doubleBuffer, &context, window.id, 1920, 1080, 0x000000);
 
-	// TEMP: parser to render testing
 	struct ui_xcb_Pixmap mainArea = { 0 };
-	ui_xcb_Pixmap_init(&mainArea, &context, doubleBuffer.pixmap, 1920, 1080, 0x222222);
+	ui_xcb_Pixmap_init(&mainArea, &context, doubleBuffer.pixmap, 1920, 10080, 0x222222);
 	int32_t mainAreaYoffset = 0;
 	uint32_t mainAreaXMax = 0;
+
+	uint32_t windowWidth = 0;
+	uint32_t windowHeight = 0;
+	(void) windowWidth;
+	(void) windowHeight;
 
 	xcb_flush(context.connection);
 	while (ui_xcb_Event_waitForEvent(&event))
@@ -143,7 +155,11 @@ main(int argc, char **argv)
 
 			if (prevWidth != cnEvent->width)
 			{
-				mainAreaXMax = resizeMainContent(&mainArea, text, &parser, cnEvent->width - 100);
+				mainAreaXMax = resizeMainContent(&mainArea,
+						text, &parser,
+						cnEvent->width - 75,
+						cnEvent->height,
+						mainAreaYoffset);
 				ui_xcb_Pixmap_render(&mainArea, 0, 0);
 				mainAreaXMaxDuringRZ = mainAreaXMax;
 			}
@@ -161,33 +177,53 @@ main(int argc, char **argv)
 				mainAreaXMax -= cnEvent->height;
 			}
 			prevWidth = cnEvent->width;
+
+			windowWidth = cnEvent->width;
+			windowHeight = cnEvent->height;
 		} 	break;
 		case XCB_EXPOSE:
 		{
 			xcb_expose_event_t *expose = (xcb_expose_event_t *) event.generic_event;
 			(void) expose;
-			ui_xcb_Pixmap_render(&doubleBuffer, 0, mainAreaYoffset);
+			ui_xcb_Pixmap_render(&doubleBuffer, 0, 0);
 		}	break;
 		case XCB_BUTTON_PRESS:
 		{
+			static const uint32_t offsetSpeed = 40;
 			xcb_button_press_event_t *bp = (xcb_button_press_event_t *) event.generic_event;
 			switch (bp->detail)
 			{
 			case 4:
-				mainAreaYoffset -= 20;
+				mainAreaYoffset -= offsetSpeed;
 				if (mainAreaYoffset <= 0)
 				{
 					mainAreaYoffset = 0;
 				}
-				ui_xcb_Pixmap_render(&doubleBuffer, 0, -mainAreaYoffset);
+#if 0
+				resizeMainContent(&mainArea,
+						text, &parser,
+						windowWidth - 100,
+						windowHeight,
+						mainAreaYoffset);
+#endif
+				ui_xcb_Pixmap_render(&mainArea, 0, -mainAreaYoffset);
+				ui_xcb_Pixmap_render(&doubleBuffer, 0, 0);
 				break;
 			case 5:
-				mainAreaYoffset += 20;
+				mainAreaYoffset += offsetSpeed;
 				if (mainAreaYoffset >= mainAreaXMax)
 				{
 					mainAreaYoffset = mainAreaXMax;
 				}
-				ui_xcb_Pixmap_render(&doubleBuffer, 0, -mainAreaYoffset);
+#if 0
+				resizeMainContent(&mainArea,
+						text, &parser,
+						windowWidth - 100,
+						windowHeight,
+						mainAreaYoffset);
+#endif
+				ui_xcb_Pixmap_render(&mainArea, 0, -mainAreaYoffset);
+				ui_xcb_Pixmap_render(&doubleBuffer, 0, 0);
 				break;
 			default:
 				break;
@@ -221,12 +257,28 @@ uint32_t
 resizeMainContent(struct ui_xcb_Pixmap *mainArea,
 		struct ui_xcb_Text *text,
 		const struct gemini_Parser *parser,
-		const uint32_t width)
+		const uint32_t width,
+		const uint32_t height,
+		const uint32_t yOffset)
 {
+	static const uint32_t yChange = 20;
+
 	ui_xcb_Pixmap_clear(mainArea);
+
 	uint32_t pY = 10;
-	for (uint32_t i = 0; i < parser->length; ++i, pY += 15)
+	for (uint32_t i = 0; i < parser->length; ++i, pY += yChange)
 	{
+#if 0
+		if (pY < yOffset)
+		{
+			continue;
+		}
+		else if (pY > (yOffset + height + 50))
+		{
+			break;
+		}
+#endif
+
 		const struct gemini_Parser_Line *line = &parser->array[i];
 
 		switch (line->type)
@@ -266,7 +318,6 @@ resizeMainContent(struct ui_xcb_Pixmap *mainArea,
 					line->content.link.text,
 					20, pY, 0xFFFFFF, 1);
 			break;
-			break;
 		case GEMINI_PARSER_TYPE_TEXT:
 		case GEMINI_PARSER_TYPE_BLOCKQUOTES:
 		{
@@ -275,9 +326,9 @@ resizeMainContent(struct ui_xcb_Pixmap *mainArea,
 					line->content.text,
 					10, pY,
 					(line->type == GEMINI_PARSER_TYPE_TEXT) ? 0xFFFFFF : 0xAAAAAA,
-					1, width);
+					1, width, yChange);
 
-			pY += addY - 15;
+			pY += addY - yChange;
 		}	break;
 		case GEMINI_PARSER_TYPE_PREFORMATTED:
 			ui_xcb_Text_render(&text[4],
