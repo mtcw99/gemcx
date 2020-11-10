@@ -11,7 +11,7 @@
 #include "ui/xcb/text.h"
 #include "ui/xcb/pixmap.h"
 
-void resizeMainContent(struct ui_xcb_Pixmap *mainArea,
+uint32_t resizeMainContent(struct ui_xcb_Pixmap *mainArea,
 		struct ui_xcb_Text *text,
 		const struct gemini_Parser *parser,
 		const uint32_t width);
@@ -106,6 +106,8 @@ main(int argc, char **argv)
 	// TEMP: parser to render testing
 	struct ui_xcb_Pixmap mainArea = { 0 };
 	ui_xcb_Pixmap_init(&mainArea, &context, doubleBuffer.pixmap, 1920, 1080, 0x222222);
+	int32_t mainAreaYoffset = 0;
+	uint32_t mainAreaXMax = 0;
 
 	xcb_flush(context.connection);
 	while (ui_xcb_Event_waitForEvent(&event))
@@ -130,19 +132,62 @@ main(int argc, char **argv)
 		}	break;
 		case XCB_CONFIGURE_NOTIFY:
 		{
+			static uint32_t prevWidth = 0;
+			static uint32_t mainAreaXMaxDuringRZ = 0;
 			xcb_configure_notify_event_t *cnEvent =
 				(xcb_configure_notify_event_t *) event.generic_event;
-			resizeMainContent(&mainArea, &text, &parser, cnEvent->width - 100);
-			ui_xcb_Pixmap_render(&mainArea, 0, 0);
+
+			if (prevWidth != cnEvent->width)
+			{
+				mainAreaXMax = resizeMainContent(&mainArea, &text, &parser, cnEvent->width - 100);
+				ui_xcb_Pixmap_render(&mainArea, 0, 0);
+				mainAreaXMaxDuringRZ = mainAreaXMax;
+			}
+			else
+			{
+				mainAreaXMax = mainAreaXMaxDuringRZ;
+			}
+
+			if (cnEvent->height > mainAreaXMax)
+			{
+				mainAreaXMax = 0;
+			}
+			else
+			{
+				mainAreaXMax -= cnEvent->height;
+			}
+			prevWidth = cnEvent->width;
 		} 	break;
 		case XCB_EXPOSE:
 		{
 			xcb_expose_event_t *expose = (xcb_expose_event_t *) event.generic_event;
 			(void) expose;
-			ui_xcb_Pixmap_render(&doubleBuffer, 0, 0);
+			ui_xcb_Pixmap_render(&doubleBuffer, 0, mainAreaYoffset);
 		}	break;
 		case XCB_BUTTON_PRESS:
 		{
+			xcb_button_press_event_t *bp = (xcb_button_press_event_t *) event.generic_event;
+			switch (bp->detail)
+			{
+			case 4:
+				mainAreaYoffset -= 20;
+				if (mainAreaYoffset <= 0)
+				{
+					mainAreaYoffset = 0;
+				}
+				ui_xcb_Pixmap_render(&doubleBuffer, 0, -mainAreaYoffset);
+				break;
+			case 5:
+				mainAreaYoffset += 20;
+				if (mainAreaYoffset >= mainAreaXMax)
+				{
+					mainAreaYoffset = mainAreaXMax;
+				}
+				ui_xcb_Pixmap_render(&doubleBuffer, 0, -mainAreaYoffset);
+				break;
+			default:
+				break;
+			}
 		}	break;
 		default:
 			break;
@@ -162,14 +207,15 @@ main(int argc, char **argv)
 	return 0;
 }
 
-void
+uint32_t
 resizeMainContent(struct ui_xcb_Pixmap *mainArea,
 		struct ui_xcb_Text *text,
 		const struct gemini_Parser *parser,
 		const uint32_t width)
 {
 	ui_xcb_Pixmap_clear(mainArea);
-	for (uint32_t i = 0, pY = 10; i < parser->length; ++i, pY += 15)
+	uint32_t pY = 10;
+	for (uint32_t i = 0; i < parser->length; ++i, pY += 15)
 	{
 		const struct gemini_Parser_Line *line = &parser->array[i];
 
@@ -229,5 +275,7 @@ resizeMainContent(struct ui_xcb_Pixmap *mainArea,
 			break;
 		}
 	}
+
+	return pY;
 }
 
