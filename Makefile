@@ -9,6 +9,8 @@ src/main.c
 src/gemini/client.c
 src/gemini/header.c
 src/gemini/parser.c
+src/gopher/client.c
+src/gopher/parser.c
 src/ui/xcb/context.c
 src/ui/xcb/key.c
 src/ui/xcb/window.c
@@ -16,13 +18,14 @@ src/ui/xcb/event.c
 src/ui/xcb/text.c
 src/ui/xcb/pixmap.c
 src/util/memory.c
+src/util/socket.c
 endef
 
 SRC := $(strip ${SRC})
 
 CC = cc
-#CFLAGS = -std=c99 -pedantic -Wall -Os -g
-CFLAGS = -std=c99 -pedantic -Wall -Os -flto
+CFLAGS = -std=c99 -pedantic -Wall -Os -g
+#CFLAGS = -std=c99 -pedantic -Wall -Os -flto
 INCLUDEDIR = include/
 LIBS = -D_POSIX_C_SOURCE=200809L -lssl -lcrypto -lxcb -lxkbcommon -lxkbcommon-x11
 PKG = pangocairo fontconfig

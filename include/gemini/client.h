@@ -8,11 +8,11 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
+#include "util/socket.h"
+
 struct gemini_Client
 {
-	char scheme[256];
-	char hostname[256];
-	char hostResource[256];
+	struct util_socket_Host host;
 	char localTmpPath[256];
 	char url[1024];
 };

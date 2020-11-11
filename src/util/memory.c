@@ -113,6 +113,7 @@ util_memory_free(void *ptr)
 	bool found = false;
 	const uint64_t index = util_memory__getIndex(ptr, &found);
 	free(ptr);
+	ptr = NULL;
 	if (found)
 	{
 		mems.total -= mems.allocSize[index];
@@ -136,6 +137,7 @@ util_memory_freeAll(void)
 			if ((mems.ptrs[i] != NULL) && (mems.allocSize[i] > 0))
 			{
 				free(mems.ptrs[i]);
+				mems.ptrs[i] = NULL;
 			}
 			mems.total -= mems.allocSize[i];
 		}
@@ -148,6 +150,8 @@ util_memory_freeAll(void)
 
 	free(mems.ptrs);
 	free(mems.allocSize);
+	mems.ptrs = NULL;
+	mems.allocSize = NULL;
 }
 
 void

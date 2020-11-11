@@ -87,7 +87,7 @@ void
 ui_xcb_Text_GDEINIT(void)
 {
 	pango_cairo_font_map_set_default(NULL);
-	cairo_debug_reset_static_data();
+	//cairo_debug_reset_static_data();
 	FcFini();
 }
 

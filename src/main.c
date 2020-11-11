@@ -4,12 +4,15 @@
 #include "gemini/parser.h"
 #include "gemini/client.h"
 #include "gemini/header.h"
+#include "gopher/parser.h"
 #include "ui/xcb/context.h"
 #include "ui/xcb/key.h"
 #include "ui/xcb/window.h"
 #include "ui/xcb/event.h"
 #include "ui/xcb/text.h"
 #include "ui/xcb/pixmap.h"
+
+#define ENABLE_XCB 0
 
 uint32_t resizeMainContent(struct ui_xcb_Pixmap *mainArea,
 		struct ui_xcb_Text *text,
@@ -51,12 +54,12 @@ main(int argc, char **argv)
 	gemini_Header_print(&header);
 #endif
 
-#if 1
+#if 0
 	struct gemini_Parser parser = { 0 };
 	gemini_Parser_init(&parser);
 	//gemini_Parser_parseFp(&parser, tmpf);
-	//gemini_Parser_parse(&parser, "example/out.gmi");
-	gemini_Parser_parse(&parser, "example/test.gmi");
+	gemini_Parser_parse(&parser, "example/out.gmi");
+	//gemini_Parser_parse(&parser, "example/test.gmi");
 	//gemini_Parser_print(&parser);
 	//gemini_Parser_render(&parser);
 #endif
@@ -87,8 +90,16 @@ main(int argc, char **argv)
 	fclose(tmpf);
 #endif
 
+	// Gopher
+	struct gopher_Parser goParser = { 0 };
+	gopher_Parser_init(&goParser);
+	gopher_Parser_parse(&goParser, "example/test.gopher");
+	gopher_Parser_render(&goParser);
+	//gopher_Parser_deinit(&goParser);
+
 	// XCB TEMPS
 	
+#if 0
 	struct ui_xcb_Context context = { 0 };
 	ui_xcb_Context_init(&context);
 
@@ -160,7 +171,7 @@ main(int argc, char **argv)
 						cnEvent->width - 75,
 						cnEvent->height,
 						mainAreaYoffset);
-				ui_xcb_Pixmap_render(&mainArea, 0, 0);
+				ui_xcb_Pixmap_render(&mainArea, 0, -mainAreaYoffset);
 				mainAreaXMaxDuringRZ = mainAreaXMax;
 			}
 			else
@@ -190,6 +201,7 @@ main(int argc, char **argv)
 		case XCB_BUTTON_PRESS:
 		{
 			static const uint32_t offsetSpeed = 40;
+			static const uint32_t maxOffset = 100;
 			xcb_button_press_event_t *bp = (xcb_button_press_event_t *) event.generic_event;
 			switch (bp->detail)
 			{
@@ -199,29 +211,22 @@ main(int argc, char **argv)
 				{
 					mainAreaYoffset = 0;
 				}
-#if 0
-				resizeMainContent(&mainArea,
-						text, &parser,
-						windowWidth - 100,
-						windowHeight,
-						mainAreaYoffset);
-#endif
-				ui_xcb_Pixmap_render(&mainArea, 0, -mainAreaYoffset);
-				ui_xcb_Pixmap_render(&doubleBuffer, 0, 0);
 				break;
 			case 5:
 				mainAreaYoffset += offsetSpeed;
-				if (mainAreaYoffset >= mainAreaXMax)
+				if (mainAreaYoffset >= (mainAreaXMax + maxOffset))
 				{
-					mainAreaYoffset = mainAreaXMax;
+					mainAreaYoffset = mainAreaXMax + maxOffset;
 				}
-#if 0
-				resizeMainContent(&mainArea,
-						text, &parser,
-						windowWidth - 100,
-						windowHeight,
-						mainAreaYoffset);
-#endif
+				break;
+			default:
+				break;
+			}
+
+			switch (bp->detail)
+			{
+			case 4:
+			case 5:
 				ui_xcb_Pixmap_render(&mainArea, 0, -mainAreaYoffset);
 				ui_xcb_Pixmap_render(&doubleBuffer, 0, 0);
 				break;
@@ -248,11 +253,13 @@ main(int argc, char **argv)
 	ui_xcb_Context_deinit(&context);
 
 	ui_xcb_Text_GDEINIT();
+#endif
 
 	util_memory_freeAll();
 	return 0;
 }
 
+#if 0
 uint32_t
 resizeMainContent(struct ui_xcb_Pixmap *mainArea,
 		struct ui_xcb_Text *text,
@@ -343,4 +350,5 @@ resizeMainContent(struct ui_xcb_Pixmap *mainArea,
 
 	return pY;
 }
+#endif
 

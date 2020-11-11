@@ -14,13 +14,6 @@
 
 const char *GEMINI_PORT = "1965";
 
-enum gemini_Client_UriFind
-{
-	GEMINI_CLIENT_URIFIND_PROTOCOL = 0,
-	GEMINI_CLIENT_URIFIND_HOSTNAME,
-	GEMINI_CLIENT_URIFIND_RESOURCE
-};
-
 static const char *geminiClientErrorStr[GEMINI_CLIENT_CONNECTERROR__TOTAL] = {
 	[GEMINI_CLIENT_CONNECTERROR_NONE] = "None",
 	[GEMINI_CLIENT_CONNECTERROR_TLS_NOCONTEXT] = "TLS: Context unable to initalize",
@@ -69,62 +62,7 @@ gemini_Client__cleanupRetErr(struct gemini_TLS *tls,
 void
 gemini_Client_init(struct gemini_Client *client, const char *uri)
 {
-	const uint32_t uriSize = strlen(uri);
-	enum gemini_Client_UriFind uriFind = GEMINI_CLIENT_URIFIND_PROTOCOL;
-
-	char proto[256] = { 0 };
-	uint32_t protoSize = 0;
-	bool protoRead = true;
-
-	uint32_t hostnameSize = 1;
-	uint32_t resourceSize = 1;
-
-	for (uint32_t i = 0; i < uriSize; ++i)
-	{
-		switch (uriFind)
-		{
-		case GEMINI_CLIENT_URIFIND_PROTOCOL:
-			switch (uri[i])
-			{
-			case ':':
-			case '/':
-				protoRead = false;
-				break;
-			default:
-				if (protoRead)
-				{
-					proto[protoSize++] = uri[i];
-				}
-				else
-				{
-					uriFind = GEMINI_CLIENT_URIFIND_HOSTNAME;
-					proto[protoSize] = '\0';
-					client->hostname[0] = uri[i];
-				}
-				break;
-			}
-			break;
-		case GEMINI_CLIENT_URIFIND_HOSTNAME:
-			switch (uri[i])
-			{
-			case '/':
-				uriFind = GEMINI_CLIENT_URIFIND_RESOURCE;
-				client->hostname[hostnameSize] = '\0';
-				client->hostResource[0] = '/';
-				break;
-			default:
-				client->hostname[hostnameSize++] = uri[i];
-				break;
-			}
-			break;
-		case GEMINI_CLIENT_URIFIND_RESOURCE:
-			client->hostResource[resourceSize++] = uri[i];
-			break;
-		}
-	}
-	client->hostResource[resourceSize] = '\0';
-
-	strcpy(client->scheme, proto);
+	util_socket_Host_init(&client->host, uri);
 	strcpy(client->url, uri);
 	client->localTmpPath[0] = '\0';
 }
@@ -133,71 +71,6 @@ void
 gemini_Client_deinit(struct gemini_Client *client)
 {
 	(void) client;
-}
-
-void *
-gemini_Client__getInAddr(struct sockaddr *sa)
-{
-	if (sa->sa_family == AF_INET)
-	{
-		return &(((struct sockaddr_in *) sa)->sin_addr);
-	}
-	else
-	{
-		return &(((struct sockaddr_in6 *) sa)->sin6_addr);
-	}
-}
-
-static int32_t
-gemini_Client__socketConn(struct gemini_Client *client, int32_t *sockfd)
-{
-	int32_t rv;
-	struct addrinfo hints = { 0 };
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
-	char inAddr[INET6_ADDRSTRLEN] = { 0 };
-
-	struct addrinfo *addrinfo;
-	rv = getaddrinfo(client->hostname, GEMINI_PORT, &hints, &addrinfo);
-	if (rv != 0)
-	{
-		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
-		return -1;
-	}
-
-	struct addrinfo *p;
-	// Loop through all the results and connect to the first one
-	for (p = addrinfo; p != NULL; p = p->ai_next)
-	{
-		*sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
-		if (*sockfd == -1)
-		{
-			continue;
-		}
-
-		if (connect(*sockfd, p->ai_addr, p->ai_addrlen) != -1)
-		{
-			break;	// Connection made
-		}
-
-		close(*sockfd);
-	}
-
-	if (p == NULL)
-	{
-		fprintf(stderr, "client: failed to connect\n");
-		return -1;
-	}
-
-	inet_ntop(p->ai_family, gemini_Client__getInAddr((struct sockaddr *) p->ai_addr),
-			inAddr, sizeof(inAddr));
-	printf("inAddr: %s\n", inAddr);
-
-	freeaddrinfo(addrinfo);
-
-	printf("gemini_Client__socketConn: Connection made\n");
-
-	return 0;
 }
 
 int32_t
@@ -248,18 +121,16 @@ gemini_Client_request(struct gemini_Client *client,
 				GEMINI_CLIENT_CONNECTERROR_TLS_WEB);
 	}
 
-#if 1
-	tls.res = gemini_Client__socketConn(client, &tls.fd);
+	tls.res = util_socket_connect(client->host.hostname, GEMINI_PORT, &tls.fd);
 	if (tls.res == -1)
 	{
 		return gemini_Client__cleanupRetErr(&tls,
 				GEMINI_CLIENT_CONNECTERROR_SOCKETCONN);
 	}
 	//printf("tls.fd: %d\n", tls.fd);
-#endif
 
 	char hostnamePort[512] = { 0 };
-	sprintf(hostnamePort, "%s:%s", client->hostname, GEMINI_PORT);
+	sprintf(hostnamePort, "%s:%s", client->host.hostname, GEMINI_PORT);
 	printf("Hostname:PORT: %s\n", hostnamePort);
 
 	tls.ssl = SSL_new(tls.ctx);
@@ -270,14 +141,14 @@ gemini_Client_request(struct gemini_Client *client,
 	}
 	SSL_set_connect_state(tls.ssl);
 
-	tls.res = SSL_set1_host(tls.ssl, client->hostname);
+	tls.res = SSL_set1_host(tls.ssl, client->host.hostname);
 	if (tls.res != 1)
 	{
 		return gemini_Client__cleanupRetErr(&tls,
 				GEMINI_CLIENT_CONNECTERROR_TLS_NOSET1HN);
 	}
 
-	tls.res = SSL_set_tlsext_host_name(tls.ssl, client->hostname);
+	tls.res = SSL_set_tlsext_host_name(tls.ssl, client->host.hostname);
 	if (tls.res != 1)
 	{
 		return gemini_Client__cleanupRetErr(&tls,
@@ -399,12 +270,7 @@ gemini_Client_request(struct gemini_Client *client,
 void
 gemini_Client_printInfo(const struct gemini_Client *client)
 {
-	printf("gemini client URI info:\n"
-			"\tScheme: %s\n"
-			"\tHostname: %s\n"
-			"\tResource: %s\n\n",
-			client->scheme, client->hostname,
-			client->hostResource);
+	util_socket_Host_printInfo(&client->host);
 }
 
 const char *
