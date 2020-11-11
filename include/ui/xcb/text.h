@@ -23,6 +23,17 @@ struct ui_xcb_Text
 	uint32_t	mostSymbolsWidth;
 };
 
+enum ui_xcb_TextType
+{
+	UI_XCB_TEXTTYPE_TEXT,	// Gemini defaults to this
+	UI_XCB_TEXTTYPE_H1,
+	UI_XCB_TEXTTYPE_H2,
+	UI_XCB_TEXTTYPE_H3,
+	UI_XCB_TEXTTYPE_PRE,	// Gopher and text file defaults to this
+
+	UI_XCB_TEXTTYPE__TOTAL
+};
+
 void ui_xcb_Text_init(struct ui_xcb_Text *text, struct ui_xcb_Context *context,
 		const char *fontConfig);
 void ui_xcb_Text_deinit(struct ui_xcb_Text *text);

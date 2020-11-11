@@ -9,8 +9,10 @@ src/main.c
 src/gemini/client.c
 src/gemini/header.c
 src/gemini/parser.c
+src/gemini/xcb.c
 src/gopher/client.c
 src/gopher/parser.c
+src/gopher/xcb.c
 src/ui/xcb/context.c
 src/ui/xcb/key.c
 src/ui/xcb/window.c

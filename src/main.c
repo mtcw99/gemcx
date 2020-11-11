@@ -5,9 +5,11 @@
 #include "gemini/parser.h"
 #include "gemini/client.h"
 #include "gemini/header.h"
+#include "gemini/xcb.h"
 
 #include "gopher/parser.h"
 #include "gopher/client.h"
+#include "gopher/xcb.h"
 
 #include "ui/xcb/context.h"
 #include "ui/xcb/key.h"
@@ -17,13 +19,6 @@
 #include "ui/xcb/pixmap.h"
 
 #define ENABLE_XCB 0
-
-uint32_t resizeMainContent(struct ui_xcb_Pixmap *mainArea,
-		struct ui_xcb_Text *text,
-		const struct gemini_Parser *parser,
-		const uint32_t width,
-		const uint32_t height,
-		const uint32_t yOffset);
 
 int
 main(int argc, char **argv)
@@ -58,7 +53,7 @@ main(int argc, char **argv)
 	gemini_Header_print(&header);
 #endif
 
-#if 0
+#if 1
 	struct gemini_Parser parser = { 0 };
 	gemini_Parser_init(&parser);
 	//gemini_Parser_parseFp(&parser, tmpf);
@@ -129,7 +124,7 @@ main(int argc, char **argv)
 
 	// XCB TEMPS
 	
-#if 0
+#if 1
 	struct ui_xcb_Context context = { 0 };
 	ui_xcb_Context_init(&context);
 
@@ -140,14 +135,14 @@ main(int argc, char **argv)
 	struct ui_xcb_Event event = { 0 };
 	ui_xcb_Event_init(&event, context.connection);
 
-	const char *fontConfigs[5] = {
-		"noto sans normal 12",
-		"noto sans bold 24",
-		"noto sans bold 18",
-		"noto sans bold 14",
-		"liberation mono 12"
+	const char *fontConfigs[UI_XCB_TEXTTYPE__TOTAL] = {
+		[UI_XCB_TEXTTYPE_TEXT] = "noto sans normal 12",
+		[UI_XCB_TEXTTYPE_H1] = "noto sans bold 24",
+		[UI_XCB_TEXTTYPE_H2] = "noto sans bold 18",
+		[UI_XCB_TEXTTYPE_H3] = "noto sans bold 14",
+		[UI_XCB_TEXTTYPE_PRE] = "liberation mono 12"
 	};
-	struct ui_xcb_Text text[5] = { 0 };
+	struct ui_xcb_Text text[UI_XCB_TEXTTYPE__TOTAL] = { 0 };
 	for (uint32_t i = 0; i < 5; ++i)
 	{
 		ui_xcb_Text_init(&text[i], &context, fontConfigs[i]);
@@ -196,11 +191,16 @@ main(int argc, char **argv)
 
 			if (prevWidth != cnEvent->width)
 			{
-				mainAreaXMax = resizeMainContent(&mainArea,
+#if 0
+				mainAreaXMax = gemini_Xcb_render(&mainArea,
 						text, &parser,
 						cnEvent->width - 75,
 						cnEvent->height,
 						mainAreaYoffset);
+#else
+				mainAreaXMax = gopher_Xcb_render(&goParser,
+						 &mainArea, &text[UI_XCB_TEXTTYPE_PRE]);
+#endif
 				ui_xcb_Pixmap_render(&mainArea, 0, -mainAreaYoffset);
 				mainAreaXMaxDuringRZ = mainAreaXMax;
 			}
@@ -288,97 +288,4 @@ main(int argc, char **argv)
 	util_memory_freeAll();
 	return 0;
 }
-
-#if 0
-uint32_t
-resizeMainContent(struct ui_xcb_Pixmap *mainArea,
-		struct ui_xcb_Text *text,
-		const struct gemini_Parser *parser,
-		const uint32_t width,
-		const uint32_t height,
-		const uint32_t yOffset)
-{
-	static const uint32_t yChange = 20;
-
-	ui_xcb_Pixmap_clear(mainArea);
-
-	uint32_t pY = 10;
-	for (uint32_t i = 0; i < parser->length; ++i, pY += yChange)
-	{
-#if 0
-		if (pY < yOffset)
-		{
-			continue;
-		}
-		else if (pY > (yOffset + height + 50))
-		{
-			break;
-		}
-#endif
-
-		const struct gemini_Parser_Line *line = &parser->array[i];
-
-		switch (line->type)
-		{
-		case GEMINI_PARSER_TYPE_HEAD:
-			ui_xcb_Text_render(&text[line->content.head.level],
-					mainArea->pixmap,
-					line->content.head.text,
-					10, pY, 0xFFFFFF, 1);
-			switch (line->content.head.level)
-			{
-			case 1:	pY += 35; break;
-			case 2:	pY += 25; break;
-			case 3:	pY += 15; break;
-			default:	break;
-			}
-			break;
-		case GEMINI_PARSER_TYPE_LINK:
-			ui_xcb_Text_render(&text[0],
-					mainArea->pixmap,
-					"=>",
-					10, pY, 0xFFFFFF, 1);
-
-			ui_xcb_Text_render(&text[0],
-					mainArea->pixmap,
-					line->content.link.text,
-					25, pY, 0xFFFFFF, 1);
-			break;
-		case GEMINI_PARSER_TYPE_LIST:
-			ui_xcb_Text_render(&text[0],
-					mainArea->pixmap,
-					"*",
-					10, pY, 0xFFFFFF, 1);
-
-			ui_xcb_Text_render(&text[0],
-					mainArea->pixmap,
-					line->content.link.text,
-					20, pY, 0xFFFFFF, 1);
-			break;
-		case GEMINI_PARSER_TYPE_TEXT:
-		case GEMINI_PARSER_TYPE_BLOCKQUOTES:
-		{
-			const double addY = ui_xcb_Text_renderWrapped(&text[0],
-					mainArea->pixmap,
-					line->content.text,
-					10, pY,
-					(line->type == GEMINI_PARSER_TYPE_TEXT) ? 0xFFFFFF : 0xAAAAAA,
-					1, width, yChange);
-
-			pY += addY - yChange;
-		}	break;
-		case GEMINI_PARSER_TYPE_PREFORMATTED:
-			ui_xcb_Text_render(&text[4],
-					mainArea->pixmap,
-					line->content.text,
-					10, pY, 0xFFFFFF, 1);
-			break;
-		default:
-			break;
-		}
-	}
-
-	return pY;
-}
-#endif
 
