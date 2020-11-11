@@ -1,5 +1,5 @@
 # gemcx
-Gemini Protocol Client written in C99 + xcb
+Gemini and Gopher protocols Client written in C99 + xcb
 
 ## Installation
 ### Dependencies

@@ -1,10 +1,14 @@
 #include <stdio.h>
 
 #include "util/memory.h"
+
 #include "gemini/parser.h"
 #include "gemini/client.h"
 #include "gemini/header.h"
+
 #include "gopher/parser.h"
+#include "gopher/client.h"
+
 #include "ui/xcb/context.h"
 #include "ui/xcb/key.h"
 #include "ui/xcb/window.h"
@@ -91,10 +95,36 @@ main(int argc, char **argv)
 #endif
 
 	// Gopher
+	
+#if 0
+	FILE *tmpfp = fopen("example/out.gopher", "w+");
+	
+	struct gopher_Client goClient = { 0 };
+	gopher_Client_init(&goClient, "gopher://gopher.quux.org/1/");
+	gopher_Client_printInfo(&goClient);
+	enum gopher_Client_ConnectError connErr = gopher_Client_request(&goClient, tmpfp);
+	if (connErr != GOPHER_CLIENT_CONNECTERROR_NONE)
+	{
+		fprintf(stderr, "Gopher client ERROR CODE: %d\n",
+				connErr);
+	}
+	gopher_Client_deinit(&goClient);
+
+	// Print it all out
+	rewind(tmpfp);
+	char tmpfpBuffer[1024] = { 0 };
+	while (fgets(tmpfpBuffer, sizeof(tmpfpBuffer), tmpfp) != NULL)
+	{
+		printf("tmpfp: %s", tmpfpBuffer);
+	}
+
+	fclose(tmpfp);
+#endif
+
 	struct gopher_Parser goParser = { 0 };
 	gopher_Parser_init(&goParser);
-	gopher_Parser_parse(&goParser, "example/test.gopher");
-	gopher_Parser_render(&goParser);
+	gopher_Parser_parse(&goParser, "example/out.gopher");
+	//gopher_Parser_render(&goParser);
 	//gopher_Parser_deinit(&goParser);
 
 	// XCB TEMPS
