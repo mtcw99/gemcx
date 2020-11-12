@@ -2,14 +2,11 @@
 
 #include "util/memory.h"
 
-#include "gemini/parser.h"
-#include "gemini/client.h"
-#include "gemini/header.h"
-#include "gemini/xcb.h"
+#include "protocol/client.h"
+#include "protocol/parser.h"
+#include "protocol/xcb.h"
 
-#include "gopher/parser.h"
-#include "gopher/client.h"
-#include "gopher/xcb.h"
+#include "protocol/gemini/header.h"
 
 #include "ui/xcb/context.h"
 #include "ui/xcb/key.h"
@@ -28,103 +25,17 @@ main(int argc, char **argv)
 
 	util_memory_enableDebug();
 
-#if 0
-	if (argc < 2)
-	{
-		return 1;
-	}
-	gemini_Client_GINIT();
-
-	FILE *tmpf = tmpfile();
-
-	struct gemini_Client client = { 0 };
-	gemini_Client_init(&client, argv[1]);
-	gemini_Client_printInfo(&client);
-	enum gemini_Client_ConnectError connErr = gemini_Client_request(&client, tmpf);
-	if (connErr != GEMINI_CLIENT_CONNECTERROR_NONE)
-	{
-		fprintf(stderr, "ERROR %d has occured: %s\n",
-				connErr, gemini_Client_getErrorStr(connErr));
-		return 1;
-	}
-
-	struct gemini_Header header = { 0 };
-	gemini_Header_get(&header, tmpf);
-	gemini_Header_print(&header);
-#endif
-
+	struct protocol_Parser parser = { 0 };
 #if 1
-	struct gemini_Parser parser = { 0 };
-	gemini_Parser_init(&parser);
-	//gemini_Parser_parseFp(&parser, tmpf);
-	gemini_Parser_parse(&parser, "example/out.gmi");
-	//gemini_Parser_parse(&parser, "example/test.gmi");
-	//gemini_Parser_print(&parser);
-	//gemini_Parser_render(&parser);
+	protocol_Parser_init(&parser, PROTOCOL_TYPE_GOPHER);
+	protocol_Parser_parse(&parser, "example/out.gopher");
+#else
+	protocol_Parser_init(&parser, PROTOCOL_TYPE_GEMINI);
+	protocol_Parser_parse(&parser, "example/out.gmi");
 #endif
-
-#if 0
-	FILE *givenFile = fopen("example/out.gmi", "w");
-	rewind(tmpf);
-	if (fgets(header, 1027, tmpf) != NULL)
-	{
-		printf("header: %s\n", header);
-	}
-
-	while (fgets(header, 1027, tmpf) != NULL)
-	{
-		fprintf(givenFile, "%s", header);
-	}
-
-	fclose(givenFile);
-#endif
-
-#if 0
-	gemini_Header_print(&header);
-	if (gemini_Header_isGemini(&header))
-	{
-		printf("Gemini header\n");
-	}
-
-	fclose(tmpf);
-#endif
-
-	// Gopher
-	
-#if 0
-	FILE *tmpfp = fopen("example/out.gopher", "w+");
-	
-	struct gopher_Client goClient = { 0 };
-	gopher_Client_init(&goClient, "gopher://gopher.quux.org/1/");
-	gopher_Client_printInfo(&goClient);
-	enum gopher_Client_ConnectError connErr = gopher_Client_request(&goClient, tmpfp);
-	if (connErr != GOPHER_CLIENT_CONNECTERROR_NONE)
-	{
-		fprintf(stderr, "Gopher client ERROR CODE: %d\n",
-				connErr);
-	}
-	gopher_Client_deinit(&goClient);
-
-	// Print it all out
-	rewind(tmpfp);
-	char tmpfpBuffer[1024] = { 0 };
-	while (fgets(tmpfpBuffer, sizeof(tmpfpBuffer), tmpfp) != NULL)
-	{
-		printf("tmpfp: %s", tmpfpBuffer);
-	}
-
-	fclose(tmpfp);
-#endif
-
-	struct gopher_Parser goParser = { 0 };
-	gopher_Parser_init(&goParser);
-	gopher_Parser_parse(&goParser, "example/out.gopher");
-	//gopher_Parser_render(&goParser);
-	//gopher_Parser_deinit(&goParser);
 
 	// XCB TEMPS
 	
-#if 1
 	struct ui_xcb_Context context = { 0 };
 	ui_xcb_Context_init(&context);
 
@@ -152,7 +63,7 @@ main(int argc, char **argv)
 	ui_xcb_Pixmap_init(&doubleBuffer, &context, window.id, 1920, 1080, 0x000000);
 
 	struct ui_xcb_Pixmap mainArea = { 0 };
-	ui_xcb_Pixmap_init(&mainArea, &context, doubleBuffer.pixmap, 1920, 10080, 0x222222);
+	ui_xcb_Pixmap_init(&mainArea, &context, doubleBuffer.pixmap, 1920, 1080, 0x222222);
 	int32_t mainAreaYoffset = 0;
 	uint32_t mainAreaXMax = 0;
 
@@ -191,16 +102,15 @@ main(int argc, char **argv)
 
 			if (prevWidth != cnEvent->width)
 			{
-#if 0
-				mainAreaXMax = gemini_Xcb_render(&mainArea,
-						text, &parser,
+				mainAreaXMax = protocol_Xcb_render(&parser,
+						&mainArea,
+						(parser.type == PROTOCOL_TYPE_GEMINI) ?
+						 	text :
+							&text[UI_XCB_TEXTTYPE_PRE],
 						cnEvent->width - 75,
 						cnEvent->height,
 						mainAreaYoffset);
-#else
-				mainAreaXMax = gopher_Xcb_render(&goParser,
-						 &mainArea, &text[UI_XCB_TEXTTYPE_PRE]);
-#endif
+
 				ui_xcb_Pixmap_render(&mainArea, 0, -mainAreaYoffset);
 				mainAreaXMaxDuringRZ = mainAreaXMax;
 			}
@@ -272,6 +182,7 @@ main(int argc, char **argv)
 		}
 	}
 
+	// xcb deinit
 	ui_xcb_Pixmap_deinit(&doubleBuffer);
 	ui_xcb_Pixmap_deinit(&mainArea);
 	for (uint32_t i = 0; i < 5; ++i)
@@ -283,9 +194,99 @@ main(int argc, char **argv)
 	ui_xcb_Context_deinit(&context);
 
 	ui_xcb_Text_GDEINIT();
-#endif
+
+	// protocols deinit
+	protocol_Parser_deinit(&parser);
 
 	util_memory_freeAll();
 	return 0;
 }
+
+
+
+#if 0
+	if (argc < 2)
+	{
+		return 1;
+	}
+	p_gemini_Client_GINIT();
+
+	FILE *tmpf = tmpfile();
+
+	struct p_gemini_Client client = { 0 };
+	p_gemini_Client_init(&client, argv[1]);
+	p_gemini_Client_printInfo(&client);
+	enum p_gemini_Client_ConnectError connErr = p_gemini_Client_request(&client, tmpf);
+	if (connErr != GEMINI_CLIENT_CONNECTERROR_NONE)
+	{
+		fprintf(stderr, "ERROR %d has occured: %s\n",
+				connErr, p_gemini_Client_getErrorStr(connErr));
+		return 1;
+	}
+
+	struct p_gemini_Header header = { 0 };
+	p_gemini_Header_get(&header, tmpf);
+	p_gemini_Header_print(&header);
+	struct p_gemini_Parser parser = { 0 };
+	p_gemini_Parser_init(&parser);
+	//p_gemini_Parser_parseFp(&parser, tmpf);
+	p_gemini_Parser_parse(&parser, "example/out.gmi");
+	//p_gemini_Parser_parse(&parser, "example/test.gmi");
+	//p_gemini_Parser_print(&parser);
+	//p_gemini_Parser_render(&parser);
+
+	FILE *givenFile = fopen("example/out.gmi", "w");
+	rewind(tmpf);
+	if (fgets(header, 1027, tmpf) != NULL)
+	{
+		printf("header: %s\n", header);
+	}
+
+	while (fgets(header, 1027, tmpf) != NULL)
+	{
+		fprintf(givenFile, "%s", header);
+	}
+
+	fclose(givenFile);
+
+	p_gemini_Header_print(&header);
+	if (p_gemini_Header_isGemini(&header))
+	{
+		printf("Gemini header\n");
+	}
+
+	fclose(tmpf);
+
+	// Gopher
+	
+	FILE *tmpfp = fopen("example/out.gopher", "w+");
+	
+	struct p_gopher_Client goClient = { 0 };
+	p_gopher_Client_init(&goClient, "gopher://gopher.quux.org/1/");
+	p_gopher_Client_printInfo(&goClient);
+	enum p_gopher_Client_ConnectError connErr = p_gopher_Client_request(&goClient, tmpfp);
+	if (connErr != GOPHER_CLIENT_CONNECTERROR_NONE)
+	{
+		fprintf(stderr, "Gopher client ERROR CODE: %d\n",
+				connErr);
+	}
+	p_gopher_Client_deinit(&goClient);
+
+	// Print it all out
+	rewind(tmpfp);
+	char tmpfpBuffer[1024] = { 0 };
+	while (fgets(tmpfpBuffer, sizeof(tmpfpBuffer), tmpfp) != NULL)
+	{
+		printf("tmpfp: %s", tmpfpBuffer);
+	}
+
+	fclose(tmpfp);
+
+	struct p_gopher_Parser goParser = { 0 };
+	p_gopher_Parser_init(&goParser);
+	p_gopher_Parser_parse(&goParser, "example/out.gopher");
+	//p_gopher_Parser_render(&goParser);
+	//p_gopher_Parser_deinit(&goParser);
+
+#endif
 

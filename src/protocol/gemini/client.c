@@ -1,4 +1,4 @@
-#include "gemini/client.h"
+#include "protocol/gemini/client.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,25 +14,25 @@
 
 const char *GEMINI_PORT = "1965";
 
-static const char *geminiClientErrorStr[GEMINI_CLIENT_CONNECTERROR__TOTAL] = {
-	[GEMINI_CLIENT_CONNECTERROR_NONE] = "None",
-	[GEMINI_CLIENT_CONNECTERROR_TLS_NOCONTEXT] = "TLS: Context unable to initalize",
-	[GEMINI_CLIENT_CONNECTERROR_TLS_WEB] = "TLS: BIO not initalize",
-	[GEMINI_CLIENT_CONNECTERROR_TLS_WEBNOCONN] = "TLS: BIO not connected",
-	[GEMINI_CLIENT_CONNECTERROR_SOCKETCONN] = "Socket: Socket not connected",
-	[GEMINI_CLIENT_CONNECTERROR_TLS_NOSSL] = "TLS: No SSL",
-	[GEMINI_CLIENT_CONNECTERROR_TLS_NOSET1HN] = "TLS: Can't set1",
-	[GEMINI_CLIENT_CONNECTERROR_TLS_NOSETHOSTNAME] = "TLS: Can't set hostname",
-	[GEMINI_CLIENT_CONNECTERROR_TLS_CANTSETFD] = "TLS: Can't set fd",
-	[GEMINI_CLIENT_CONNECTERROR_TLS_CANTSSLCONN] = "TLS: No SSL connection",
-	[GEMINI_CLIENT_CONNECTERROR_TLS_PEERCERTIFICATE] = "TLS: Invalid peer certificate",
-	[GEMINI_CLIENT_CONNECTERROR_TLS_VERIFYRESULT] = "TLS: Cannot verify result",
-	[GEMINI_CLIENT_CONNECTERROR_BIO_NOREQSENT] = "TLS: No request sent",
+static const char *geminiClientErrorStr[P_GEMINI_CLIENT_CONNECTERROR__TOTAL] = {
+	[P_GEMINI_CLIENT_CONNECTERROR_NONE] = "None",
+	[P_GEMINI_CLIENT_CONNECTERROR_TLS_NOCONTEXT] = "TLS: Context unable to initalize",
+	[P_GEMINI_CLIENT_CONNECTERROR_TLS_WEB] = "TLS: BIO not initalize",
+	[P_GEMINI_CLIENT_CONNECTERROR_TLS_WEBNOCONN] = "TLS: BIO not connected",
+	[P_GEMINI_CLIENT_CONNECTERROR_SOCKETCONN] = "Socket: Socket not connected",
+	[P_GEMINI_CLIENT_CONNECTERROR_TLS_NOSSL] = "TLS: No SSL",
+	[P_GEMINI_CLIENT_CONNECTERROR_TLS_NOSET1HN] = "TLS: Can't set1",
+	[P_GEMINI_CLIENT_CONNECTERROR_TLS_NOSETHOSTNAME] = "TLS: Can't set hostname",
+	[P_GEMINI_CLIENT_CONNECTERROR_TLS_CANTSETFD] = "TLS: Can't set fd",
+	[P_GEMINI_CLIENT_CONNECTERROR_TLS_CANTSSLCONN] = "TLS: No SSL connection",
+	[P_GEMINI_CLIENT_CONNECTERROR_TLS_PEERCERTIFICATE] = "TLS: Invalid peer certificate",
+	[P_GEMINI_CLIENT_CONNECTERROR_TLS_VERIFYRESULT] = "TLS: Cannot verify result",
+	[P_GEMINI_CLIENT_CONNECTERROR_BIO_NOREQSENT] = "TLS: No request sent",
 };
 
-static enum gemini_Client_ConnectError
-gemini_Client__cleanupRetErr(struct gemini_TLS *tls,
-		const enum gemini_Client_ConnectError error)
+static enum p_gemini_Client_ConnectError
+p_gemini_Client__cleanupRetErr(struct p_gemini_TLS *tls,
+		const enum p_gemini_Client_ConnectError error)
 {
 	if (tls->bio)
 	{
@@ -60,7 +60,7 @@ gemini_Client__cleanupRetErr(struct gemini_TLS *tls,
 }
 
 void
-gemini_Client_init(struct gemini_Client *client, const char *uri)
+p_gemini_Client_init(struct p_gemini_Client *client, const char *uri)
 {
 	util_socket_Host_init(&client->host, uri);
 	strcpy(client->url, uri);
@@ -68,13 +68,13 @@ gemini_Client_init(struct gemini_Client *client, const char *uri)
 }
 
 void
-gemini_Client_deinit(struct gemini_Client *client)
+p_gemini_Client_deinit(struct p_gemini_Client *client)
 {
 	(void) client;
 }
 
 int32_t
-gemini_Client__verifyCallback(int32_t preverify, X509_STORE_CTX *x509_ctx)
+p_gemini_Client__verifyCallback(int32_t preverify, X509_STORE_CTX *x509_ctx)
 {
 	(void) preverify;
 	(void) x509_ctx;
@@ -92,11 +92,11 @@ gemini_Client__verifyCallback(int32_t preverify, X509_STORE_CTX *x509_ctx)
 	return 1;
 }
 
-enum gemini_Client_ConnectError
-gemini_Client_request(struct gemini_Client *client,
+enum p_gemini_Client_ConnectError
+p_gemini_Client_request(struct p_gemini_Client *client,
 		FILE *fp)
 {
-	struct gemini_TLS tls = {
+	struct p_gemini_TLS tls = {
 		.ctx = NULL,
 		.bio = NULL,
 		.ssl_bio = NULL,
@@ -110,22 +110,22 @@ gemini_Client_request(struct gemini_Client *client,
 	tls.ctx = SSL_CTX_new(TLS_method());
 	if (tls.ctx == NULL)
 	{
-		return GEMINI_CLIENT_CONNECTERROR_TLS_NOCONTEXT;
+		return P_GEMINI_CLIENT_CONNECTERROR_TLS_NOCONTEXT;
 	}
-	SSL_CTX_set_verify(tls.ctx, SSL_VERIFY_PEER, gemini_Client__verifyCallback);
+	SSL_CTX_set_verify(tls.ctx, SSL_VERIFY_PEER, p_gemini_Client__verifyCallback);
 
 	tls.ssl_bio = BIO_new(BIO_f_ssl());
 	if (tls.ssl_bio == NULL)
 	{
-		return gemini_Client__cleanupRetErr(&tls,
-				GEMINI_CLIENT_CONNECTERROR_TLS_WEB);
+		return p_gemini_Client__cleanupRetErr(&tls,
+				P_GEMINI_CLIENT_CONNECTERROR_TLS_WEB);
 	}
 
 	tls.res = util_socket_connect(client->host.hostname, GEMINI_PORT, &tls.fd);
 	if (tls.res == -1)
 	{
-		return gemini_Client__cleanupRetErr(&tls,
-				GEMINI_CLIENT_CONNECTERROR_SOCKETCONN);
+		return p_gemini_Client__cleanupRetErr(&tls,
+				P_GEMINI_CLIENT_CONNECTERROR_SOCKETCONN);
 	}
 	//printf("tls.fd: %d\n", tls.fd);
 
@@ -136,30 +136,30 @@ gemini_Client_request(struct gemini_Client *client,
 	tls.ssl = SSL_new(tls.ctx);
 	if (tls.ssl == NULL)
 	{
-		return gemini_Client__cleanupRetErr(&tls,
-				GEMINI_CLIENT_CONNECTERROR_TLS_NOSSL);
+		return p_gemini_Client__cleanupRetErr(&tls,
+				P_GEMINI_CLIENT_CONNECTERROR_TLS_NOSSL);
 	}
 	SSL_set_connect_state(tls.ssl);
 
 	tls.res = SSL_set1_host(tls.ssl, client->host.hostname);
 	if (tls.res != 1)
 	{
-		return gemini_Client__cleanupRetErr(&tls,
-				GEMINI_CLIENT_CONNECTERROR_TLS_NOSET1HN);
+		return p_gemini_Client__cleanupRetErr(&tls,
+				P_GEMINI_CLIENT_CONNECTERROR_TLS_NOSET1HN);
 	}
 
 	tls.res = SSL_set_tlsext_host_name(tls.ssl, client->host.hostname);
 	if (tls.res != 1)
 	{
-		return gemini_Client__cleanupRetErr(&tls,
-				GEMINI_CLIENT_CONNECTERROR_TLS_NOSETHOSTNAME);
+		return p_gemini_Client__cleanupRetErr(&tls,
+				P_GEMINI_CLIENT_CONNECTERROR_TLS_NOSETHOSTNAME);
 	}
 
 	tls.res = SSL_set_fd(tls.ssl, tls.fd);
 	if (tls.res != 1)
 	{
-		return gemini_Client__cleanupRetErr(&tls,
-				GEMINI_CLIENT_CONNECTERROR_TLS_CANTSETFD);
+		return p_gemini_Client__cleanupRetErr(&tls,
+				P_GEMINI_CLIENT_CONNECTERROR_TLS_CANTSETFD);
 	}
 
 	tls.res = SSL_connect(tls.ssl);
@@ -204,16 +204,16 @@ gemini_Client_request(struct gemini_Client *client,
 			fprintf(stderr, "ERR unknown\n");
 			break;
 		}
-		return gemini_Client__cleanupRetErr(&tls,
-				GEMINI_CLIENT_CONNECTERROR_TLS_CANTSSLCONN);
+		return p_gemini_Client__cleanupRetErr(&tls,
+				P_GEMINI_CLIENT_CONNECTERROR_TLS_CANTSSLCONN);
 	}
 
 	// Validates server certificate
 	X509 *cert = SSL_get_peer_certificate(tls.ssl);
 	if (cert == NULL)
 	{
-		return gemini_Client__cleanupRetErr(&tls,
-				GEMINI_CLIENT_CONNECTERROR_TLS_PEERCERTIFICATE);
+		return p_gemini_Client__cleanupRetErr(&tls,
+				P_GEMINI_CLIENT_CONNECTERROR_TLS_PEERCERTIFICATE);
 	}
 	X509_free(cert);
 
@@ -221,8 +221,8 @@ gemini_Client_request(struct gemini_Client *client,
 	long vr = SSL_get_verify_result(tls.ssl);
 	if (vr != X509_V_OK)
 	{
-		return gemini_Client__cleanupRetErr(&tls,
-				GEMINI_CLIENT_CONNECTERROR_TLS_VERIFYRESULT);
+		return p_gemini_Client__cleanupRetErr(&tls,
+				P_GEMINI_CLIENT_CONNECTERROR_TLS_VERIFYRESULT);
 	}
 #endif
 
@@ -239,8 +239,8 @@ gemini_Client_request(struct gemini_Client *client,
 	tls.res = BIO_write(tls.ssl_bio, slRequest, slRequestLen);
 	if (tls.res == -1)
 	{
-		return gemini_Client__cleanupRetErr(&tls,
-				GEMINI_CLIENT_CONNECTERROR_BIO_NOREQSENT);
+		return p_gemini_Client__cleanupRetErr(&tls,
+				P_GEMINI_CLIENT_CONNECTERROR_BIO_NOREQSENT);
 	}
 
 	printf("handle response...\n");
@@ -263,24 +263,24 @@ gemini_Client_request(struct gemini_Client *client,
 	} while (0);
 #endif
 
-	return gemini_Client__cleanupRetErr(&tls,
-			GEMINI_CLIENT_CONNECTERROR_NONE);
+	return p_gemini_Client__cleanupRetErr(&tls,
+			P_GEMINI_CLIENT_CONNECTERROR_NONE);
 }
 
 void
-gemini_Client_printInfo(const struct gemini_Client *client)
+p_gemini_Client_printInfo(const struct p_gemini_Client *client)
 {
 	util_socket_Host_printInfo(&client->host);
 }
 
 const char *
-gemini_Client_getErrorStr(const enum gemini_Client_ConnectError error)
+p_gemini_Client_getErrorStr(const enum p_gemini_Client_ConnectError error)
 {
 	return geminiClientErrorStr[error];
 }
 
 void
-gemini_Client_GINIT(void)
+p_gemini_Client_GINIT(void)
 {
 	SSL_load_error_strings();
 }

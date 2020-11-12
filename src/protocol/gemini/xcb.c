@@ -1,16 +1,16 @@
-#include "gemini/xcb.h"
+#include "protocol/gemini/xcb.h"
 
 uint32_t
-gemini_Xcb_render(struct ui_xcb_Pixmap *mainArea,
+p_gemini_Xcb_render(const struct p_gemini_Parser *parser,
+		struct ui_xcb_Pixmap *pixmap,
 		struct ui_xcb_Text *text,
-		const struct gemini_Parser *parser,
 		const uint32_t width,
 		const uint32_t height,
 		const uint32_t yOffset)
 {
 	static const uint32_t yChange = 20;
 
-	ui_xcb_Pixmap_clear(mainArea);
+	ui_xcb_Pixmap_clear(pixmap);
 
 	uint32_t pY = 10;
 	for (uint32_t i = 0; i < parser->length; ++i, pY += yChange)
@@ -26,13 +26,13 @@ gemini_Xcb_render(struct ui_xcb_Pixmap *mainArea,
 		}
 #endif
 
-		const struct gemini_Parser_Line *line = &parser->array[i];
+		const struct p_gemini_Parser_Line *line = &parser->array[i];
 
 		switch (line->type)
 		{
-		case GEMINI_PARSER_TYPE_HEAD:
+		case P_GEMINI_PARSER_TYPE_HEAD:
 			ui_xcb_Text_render(&text[line->content.head.level],
-					mainArea->pixmap,
+					pixmap->pixmap,
 					line->content.head.text,
 					10, pY, 0xFFFFFF, 1);
 			switch (line->content.head.level)
@@ -43,43 +43,43 @@ gemini_Xcb_render(struct ui_xcb_Pixmap *mainArea,
 			default:	break;
 			}
 			break;
-		case GEMINI_PARSER_TYPE_LINK:
+		case P_GEMINI_PARSER_TYPE_LINK:
 			ui_xcb_Text_render(&text[0],
-					mainArea->pixmap,
+					pixmap->pixmap,
 					"=>",
 					10, pY, 0xFFFFFF, 1);
 
 			ui_xcb_Text_render(&text[0],
-					mainArea->pixmap,
+					pixmap->pixmap,
 					line->content.link.text,
 					25, pY, 0xFFFFFF, 1);
 			break;
-		case GEMINI_PARSER_TYPE_LIST:
+		case P_GEMINI_PARSER_TYPE_LIST:
 			ui_xcb_Text_render(&text[0],
-					mainArea->pixmap,
+					pixmap->pixmap,
 					"*",
 					10, pY, 0xFFFFFF, 1);
 
 			ui_xcb_Text_render(&text[0],
-					mainArea->pixmap,
+					pixmap->pixmap,
 					line->content.link.text,
 					20, pY, 0xFFFFFF, 1);
 			break;
-		case GEMINI_PARSER_TYPE_TEXT:
-		case GEMINI_PARSER_TYPE_BLOCKQUOTES:
+		case P_GEMINI_PARSER_TYPE_TEXT:
+		case P_GEMINI_PARSER_TYPE_BLOCKQUOTES:
 		{
 			const double addY = ui_xcb_Text_renderWrapped(&text[0],
-					mainArea->pixmap,
+					pixmap->pixmap,
 					line->content.text,
 					10, pY,
-					(line->type == GEMINI_PARSER_TYPE_TEXT) ? 0xFFFFFF : 0xAAAAAA,
+					(line->type == P_GEMINI_PARSER_TYPE_TEXT) ? 0xFFFFFF : 0xAAAAAA,
 					1, width, yChange);
 
 			pY += addY - yChange;
 		}	break;
-		case GEMINI_PARSER_TYPE_PREFORMATTED:
+		case P_GEMINI_PARSER_TYPE_PREFORMATTED:
 			ui_xcb_Text_render(&text[4],
-					mainArea->pixmap,
+					pixmap->pixmap,
 					line->content.text,
 					10, pY, 0xFFFFFF, 1);
 			break;

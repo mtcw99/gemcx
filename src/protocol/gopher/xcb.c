@@ -1,7 +1,7 @@
-#include "gopher/xcb.h"
+#include "protocol/gopher/xcb.h"
 
 uint32_t
-gopher_Xcb_render(const struct gopher_Parser *parser,
+p_gopher_Xcb_render(const struct p_gopher_Parser *parser,
 		struct ui_xcb_Pixmap *pixmap,
 		struct ui_xcb_Text *text)
 {
@@ -12,7 +12,7 @@ gopher_Xcb_render(const struct gopher_Parser *parser,
 	uint32_t pY = 10;
 	for (uint32_t i = 0; i < parser->length; ++i, pY += yChange)
 	{
-		const struct gopher_Parser_Line *line = &parser->array[i];
+		const struct p_gopher_Parser_Line *line = &parser->array[i];
 
 		switch (line->type)
 		{
