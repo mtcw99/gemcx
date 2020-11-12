@@ -20,6 +20,7 @@ src/ui/xcb/context.c
 src/ui/xcb/key.c
 src/ui/xcb/window.c
 src/ui/xcb/windowShared.c
+src/ui/xcb/subwindow.c
 src/ui/xcb/event.c
 src/ui/xcb/text.c
 src/ui/xcb/pixmap.c
