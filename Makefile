@@ -19,6 +19,7 @@ src/protocol/gopher/xcb.c
 src/ui/xcb/context.c
 src/ui/xcb/key.c
 src/ui/xcb/window.c
+src/ui/xcb/windowShared.c
 src/ui/xcb/event.c
 src/ui/xcb/text.c
 src/ui/xcb/pixmap.c
@@ -29,8 +30,9 @@ endef
 SRC := $(strip ${SRC})
 
 CC = cc
-CFLAGS = -std=c99 -pedantic -Wall -Os -g
-#CFLAGS = -std=c99 -pedantic -Wall -Os -flto
+CFLAGS = -std=c99 -pedantic -Wall
+CFLAGS_DEBUG = -O0 -g -DDEBUG
+CFLAGS_RELEASE = -Os -flto
 INCLUDEDIR = include/
 LIBS = -D_POSIX_C_SOURCE=200809L -lssl -lcrypto -lxcb -lxkbcommon -lxkbcommon-x11
 PKG = pangocairo fontconfig
@@ -41,8 +43,13 @@ DISTDIR = ${NAME}-${VERSION}
 
 build/${NAME}: ${SRC}
 	@mkdir -p build/
-	@${CC} -o build/${NAME} ${CFLAGS} ${SRC} -I${INCLUDEDIR} ${PKGCFG} ${LIBS}
-	@echo "executable in build/${NAME}"
+	@${CC} -o build/${NAME} ${CFLAGS} ${CFLAGS_RELEASE} ${SRC} -I${INCLUDEDIR} ${PKGCFG} ${LIBS}
+	@echo "release build: executable in build/${NAME}"
+
+debug: ${SRC}
+	@mkdir -p build/
+	@${CC} -o build/${NAME} ${CFLAGS} ${CFLAGS_DEBUG} ${SRC} -I${INCLUDEDIR} ${PKGCFG} ${LIBS}
+	@echo "debug build: executable in build/${NAME}"
 
 clean:
 	@echo cleaning
@@ -56,5 +63,5 @@ dist:
 		gzip -c > "${DISTDIR}.tar.gz"
 	@rm -rf "${DISTDIR}"
 
-.PHONY: clean dist
+.PHONY: clean dist debug
 

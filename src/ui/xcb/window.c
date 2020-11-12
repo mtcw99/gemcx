@@ -4,48 +4,26 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "ui/xcb/windowShared.h"
+
 bool
 ui_xcb_Window_init(struct ui_xcb_Window *window,
 		struct ui_xcb_Context *context,
 		const char *name)
 {
 	strcpy(window->name, name);
-	window->id = xcb_generate_id(context->connection);
 
-	xcb_void_cookie_t cookie = xcb_create_window_checked(
-			context->connection,
-			context->depth,
-			window->id,
+	bool created = false;
+	window->id = ui_xcb_WindowShared_createWindow(context,
 			context->screen->root,
-			0, 0,		// x, y
-			640, 480,	// w, h
+			0x000000,
+			0x000000,
 			0,
-			XCB_WINDOW_CLASS_INPUT_OUTPUT,
-			context->screen->root_visual,
-			XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK,
-			&(uint32_t [2]) {
-				[0] = 0x000000,
-				[1] = XCB_EVENT_MASK_EXPOSURE	|
-				XCB_EVENT_MASK_BUTTON_PRESS	|
-				XCB_EVENT_MASK_BUTTON_RELEASE	|
-				XCB_EVENT_MASK_POINTER_MOTION	|
-				XCB_EVENT_MASK_ENTER_WINDOW	|
-				XCB_EVENT_MASK_LEAVE_WINDOW	|
-				XCB_EVENT_MASK_KEY_PRESS	|
-				XCB_EVENT_MASK_KEY_RELEASE	|
-				XCB_EVENT_MASK_STRUCTURE_NOTIFY	|
-				XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY
-			});
-
-	xcb_generic_error_t *error = xcb_request_check(
-			context->connection,
-			cookie);
-
-	if (error)
+			(const xcb_rectangle_t) { 0, 0, 640, 480 },
+			UI_XCB_WINDOWSHARED_ROOTMASK,
+			&created);
+	if (!created)
 	{
-		fprintf(stderr, "UI/XCB/Window: ERROR: Cannot create a new"
-				" window: XCB Error code: %d\n",
-				error->error_code);
 		return false;
 	}
 
@@ -81,6 +59,8 @@ ui_xcb_Window_init(struct ui_xcb_Window *window,
 			});
 
 	window->context = context;
+	window->width = 640;
+	window->height = 480;
 	return true;
 }
 
@@ -101,5 +81,14 @@ ui_xcb_Window_map(struct ui_xcb_Window *window, const bool map)
 		[true] = xcb_map_window
 	};
 	xcb_mapunmap_win[map](window->context->connection, window->id);
+}
+
+void
+ui_xcb_Window_updateInfo(struct ui_xcb_Window *window,
+		const uint32_t width,
+		const uint32_t height)
+{
+	window->width = width;
+	window->height = height;
 }
 

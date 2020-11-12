@@ -20,6 +20,9 @@ struct ui_xcb_Window
 	uint32_t	length;
 	uint32_t	alloc;
 
+	uint32_t	width;
+	uint32_t	height;
+
 	struct ui_xcb_Context *context;
 };
 
@@ -29,6 +32,9 @@ bool ui_xcb_Window_init(struct ui_xcb_Window *windoww,
 
 void ui_xcb_Window_deinit(struct ui_xcb_Window *window);
 void ui_xcb_Window_map(struct ui_xcb_Window *window, const bool map);
+void ui_xcb_Window_updateInfo(struct ui_xcb_Window *window,
+		const uint32_t width,
+		const uint32_t height);
 
 #endif // UI_XCB_WINDOW_H
 

@@ -21,13 +21,16 @@ main(int argc, char **argv)
 	(void) argc;
 	(void) argv;
 
+#ifdef DEBUG
 	util_memory_enableDebug();
+	printf("NOTICE: RUNNING DEBUG BUILD\n");
+#endif
 	protocol_Client_GINIT();
 
 	struct protocol_Client client = { 0 };
 	struct protocol_Parser parser = { 0 };
 
-#if 0
+#if 1
 	const enum protocol_Type pType = PROTOCOL_TYPE_GOPHER;
 	const char *url = "gopher://gopher.quux.org/1/";
 	const char *fileName = "example/out.gopher";
@@ -36,12 +39,14 @@ main(int argc, char **argv)
 	const char *url = "gemini://gemini.circumlunar.space/";
 	const char *fileName = "example/out.gmi";
 #endif
+	(void) url;
 	(void) fileName;
 	FILE *reqFp = tmpfile();
 
 	protocol_Client_init(&client, pType);
 	protocol_Parser_init(&parser, pType);
 
+#if 0
 	protocol_Client_newUrl(&client, url);
 	protocol_Client_printInfo(&client);
 	const int32_t error = protocol_Client_request(&client, reqFp);
@@ -60,6 +65,9 @@ main(int argc, char **argv)
 		fgets(line, sizeof(line), reqFp);
 	}
 	protocol_Parser_parseFp(&parser, reqFp, false);
+#else
+	protocol_Parser_parse(&parser, fileName);
+#endif
 	fclose(reqFp);
 
 	// XCB TEMPS
@@ -94,11 +102,6 @@ main(int argc, char **argv)
 	ui_xcb_Pixmap_init(&mainArea, &context, doubleBuffer.pixmap, 1920, 10080, 0x222222);
 	int32_t mainAreaYoffset = 0;
 	uint32_t mainAreaXMax = 0;
-
-	uint32_t windowWidth = 0;
-	uint32_t windowHeight = 0;
-	(void) windowWidth;
-	(void) windowHeight;
 
 	xcb_flush(context.connection);
 	while (ui_xcb_Event_waitForEvent(&event))
@@ -157,8 +160,8 @@ main(int argc, char **argv)
 			}
 			prevWidth = cnEvent->width;
 
-			windowWidth = cnEvent->width;
-			windowHeight = cnEvent->height;
+			ui_xcb_Window_updateInfo(&window, cnEvent->width,
+					cnEvent->height);
 		} 	break;
 		case XCB_EXPOSE:
 		{
