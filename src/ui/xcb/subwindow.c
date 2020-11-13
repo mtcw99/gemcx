@@ -63,3 +63,16 @@ ui_xcb_Subwindow_applyAttributes(struct ui_xcb_Subwindow *subwindow)
 			});
 }
 
+void
+ui_xcb_Subwindow_show(struct ui_xcb_Subwindow *subwindow,
+		const bool show)
+{
+	static xcb_void_cookie_t (* const xcb_mapunmap_win[2])(
+			xcb_connection_t *,
+			xcb_window_t) = {
+		[false] = xcb_unmap_window,
+		[true] = xcb_map_window
+	};
+	xcb_mapunmap_win[show](subwindow->context->connection, subwindow->id);
+}
+

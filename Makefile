@@ -9,6 +9,7 @@ src/main.c
 src/protocol/parser.c
 src/protocol/xcb.c
 src/protocol/client.c
+src/protocol/links.c
 src/protocol/gemini/client.c
 src/protocol/gemini/header.c
 src/protocol/gemini/parser.c
@@ -24,6 +25,7 @@ src/ui/xcb/subwindow.c
 src/ui/xcb/event.c
 src/ui/xcb/text.c
 src/ui/xcb/pixmap.c
+src/ui/xcb/button.c
 src/util/memory.c
 src/util/socket.c
 endef

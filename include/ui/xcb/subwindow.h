@@ -33,6 +33,7 @@ bool ui_xcb_Subwindow_init(struct ui_xcb_Subwindow *subwindow,
 
 void ui_xcb_Subwindow_deinit(struct ui_xcb_Subwindow *subwindow);
 void ui_xcb_Subwindow_applyAttributes(struct ui_xcb_Subwindow *subwindow);
+void ui_xcb_Subwindow_show(struct ui_xcb_Subwindow *subwindow, const bool show);
 
 #endif // UI_XCB_SUBWINDOW_H
 

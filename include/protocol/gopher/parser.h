@@ -13,6 +13,8 @@ struct p_gopher_Parser_Line
 	char selector[128];
 	char hostname[128];
 	char port[6];
+
+	uint32_t xcbButtonIndex;
 };
 
 struct p_gopher_Parser
