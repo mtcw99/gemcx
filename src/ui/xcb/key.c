@@ -69,3 +69,29 @@ ui_xcb_Key_deinit(struct ui_xcb_Key *key)
 	if (key->kb_ctx)		xkb_context_unref(key->kb_ctx);
 }
 
+void
+ui_xcb_Key_set(struct ui_xcb_Key *key,
+		const xkb_keycode_t keycode,
+		const uint32_t mask)
+{
+	static bool prevShift = false;
+	key->mask = mask;
+
+	const bool shift = (!(key->mask & XCB_KEY_BUT_MASK_SHIFT &&
+				key->mask & XCB_KEY_BUT_MASK_LOCK)
+			&&
+			(key->mask & XCB_KEY_BUT_MASK_SHIFT ||
+			 key->mask & XCB_KEY_BUT_MASK_LOCK));
+
+	if (prevShift != shift)
+	{
+		xkb_state_update_mask(key->kb_state, 0, 0, (int) shift, 0, 0, 0);
+		prevShift = shift;
+	}
+
+	key->keysym = xkb_state_key_get_one_sym(key->kb_state, keycode);
+	xkb_state_key_get_utf8(key->kb_state, keycode, key->buffer, sizeof(key->buffer));
+	key->keysymNoMask = xkb_state_key_get_one_sym(key->kb_dummy_state, keycode);
+	// xkb_keysym_get_name(keysym, keysym_name, sizeof(keysym_name));
+}
+

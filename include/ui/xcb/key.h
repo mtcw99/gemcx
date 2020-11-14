@@ -8,7 +8,7 @@
 struct ui_xcb_Key
 {
 	xkb_keysym_t		keysym;
-	xkb_keysym_t 		keysym_no_mask;
+	xkb_keysym_t 		keysymNoMask;
 	uint32_t 		mask;
 	char 			buffer[64];
 
@@ -24,6 +24,10 @@ bool ui_xcb_Key_init(struct ui_xcb_Key *key,
 		xcb_connection_t *connection);
 
 void ui_xcb_Key_deinit(struct ui_xcb_Key *key);
+
+void ui_xcb_Key_set(struct ui_xcb_Key *key,
+		const xkb_keycode_t keycode,
+		const uint32_t mask);
 
 #endif // UI_XCB_KEY_H
 

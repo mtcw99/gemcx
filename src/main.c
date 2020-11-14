@@ -107,6 +107,9 @@ main(int argc, char **argv)
 	int32_t mainAreaYoffset = 0;
 	uint32_t mainAreaYMax = 0;
 
+	struct ui_xcb_Key xkey = { 0 };
+	ui_xcb_Key_init(&xkey, context.connection);
+
 	struct protocol_Xcb pxcb = { 0 };
 	protocol_Xcb_init(&pxcb, &context,
 			text, mainArea.pixmap, &window,
@@ -264,6 +267,69 @@ main(int argc, char **argv)
 		}	break;
 		case XCB_KEY_PRESS:
 		{
+			static const uint32_t offsetSpeed = 40;
+			static const uint32_t pageOffsetSpeed = 400;
+
+			xcb_key_press_event_t *prEv =
+				(xcb_key_press_event_t *) event.generic_event;
+
+			ui_xcb_Key_set(&xkey, prEv->detail, prEv->state);
+			//printf("key: %s\n", xkey.buffer);
+
+			switch (xkey.keysymNoMask)
+			{
+			case XKB_KEY_Escape:
+				ui_xcb_Event_close(&event);
+				break;
+			case XKB_KEY_Up:
+			case XKB_KEY_Page_Up:
+				mainAreaYoffset -= (xkey.keysymNoMask == XKB_KEY_Up) ? offsetSpeed : pageOffsetSpeed;
+				if (mainAreaYoffset <= 0)
+				{
+					mainAreaYoffset = 0;
+				}
+				break;
+			case XKB_KEY_Down:
+			case XKB_KEY_Page_Down:
+				mainAreaYoffset += (xkey.keysymNoMask == XKB_KEY_Down) ? offsetSpeed : pageOffsetSpeed;
+				if (mainAreaYoffset >= mainAreaYMax)
+				{
+					mainAreaYoffset = mainAreaYMax;
+				}
+				break;
+			default:
+				break;
+			}
+
+			switch (xkey.keysymNoMask)
+			{
+			case XKB_KEY_Up:
+			case XKB_KEY_Page_Up:
+			case XKB_KEY_Down:
+			case XKB_KEY_Page_Down:
+				protocol_Xcb_offset(&pxcb, 0, -mainAreaYoffset);
+				protocol_Xcb_scroll(&pxcb, &parser);
+				if (xkey.keysymNoMask == XKB_KEY_Down ||
+						xkey.keysymNoMask == XKB_KEY_Page_Down)
+				{
+					// Rerender buttons: scroll up apparently
+					// breaks rendering but not down
+					protocol_Xcb_scroll(&pxcb, &parser);
+				}
+
+				ui_xcb_Pixmap_render(&mainArea, 0, 0);
+				ui_xcb_Pixmap_render(&doubleBuffer, 0, 0);
+			default:
+				break;
+			}
+
+		}	break;
+		case XCB_KEY_RELEASE:
+		{
+			xcb_key_release_event_t *reEv =
+				(xcb_key_release_event_t *) event.generic_event;
+
+			ui_xcb_Key_set(&xkey, reEv->detail, reEv->state);
 		}	break;
 		default:
 			break;
@@ -274,6 +340,7 @@ main(int argc, char **argv)
 	//ui_xcb_Button_deinit(&testButton);
 
 	// xcb deinit
+	ui_xcb_Key_deinit(&xkey);
 	ui_xcb_Pixmap_deinit(&doubleBuffer);
 	ui_xcb_Pixmap_deinit(&mainArea);
 	for (uint32_t i = 0; i < 5; ++i)
