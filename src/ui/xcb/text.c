@@ -149,7 +149,8 @@ ui_xcb_Text_renderWrapped(struct ui_xcb_Text *text,
 		const uint32_t color,
 		const double alpha,
 		const uint32_t maxWidth,
-		const uint32_t spacing)
+		const uint32_t spacing,
+		const bool render)
 {
 	const uint32_t strSize = strlen(str);
 	uint32_t width = 0;
@@ -196,8 +197,11 @@ ui_xcb_Text_renderWrapped(struct ui_xcb_Text *text,
 			//printf("SPLIT at: %d - %d (%d)\n", strIdxL, strIdxR, splLen);
 			//strncpy(tmpStr, str + strIdxL, splLen);
 			tmpStr[splLen + strIdxL] = '\0';
-			ui_xcb_Text_render(text, drawable,
-					tmpStr + strIdxL, x, wrY, color, alpha);
+			if (render)
+			{
+				ui_xcb_Text_render(text, drawable,
+						tmpStr + strIdxL, x, wrY, color, alpha);
+			}
 			wrY += spacing; // spacing
 			tmpStr[splLen + strIdxL] = ' ';
 		}
@@ -214,13 +218,27 @@ ui_xcb_Text_renderWrapped(struct ui_xcb_Text *text,
 	//printf("SPLIT at: %d - %d (%d)\n", strIdxL, strIdxR, splLen);
 	//strncpy(tmpStr, str + strIdxL, splLen);
 	tmpStr[splLen + strIdxL] = '\0';
-	ui_xcb_Text_render(text, drawable,
-			tmpStr + strIdxL, x, wrY, color, alpha);
+	if (render)
+	{
+		ui_xcb_Text_render(text, drawable,
+				tmpStr + strIdxL, x, wrY, color, alpha);
+	}
 	wrY += spacing; // spacing
 
 	free(tmpStr);
 
 	return wrY - y;
+}
+
+inline double
+ui_xcb_Text_fakeRenderWrapped(struct ui_xcb_Text *text,
+		const char *str,
+		const double y,
+		const uint32_t maxWidth,
+		const uint32_t spacing)
+{
+	return ui_xcb_Text_renderWrapped(text, 0, str, 0, y, 0, 0,
+			maxWidth, spacing, false);
 }
 
 uint32_t

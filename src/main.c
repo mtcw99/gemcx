@@ -32,14 +32,15 @@ main(int argc, char **argv)
 	struct protocol_Client client = { 0 };
 	struct protocol_Parser parser = { 0 };
 
-#if 1
+#if 0
 	const enum protocol_Type pType = PROTOCOL_TYPE_GOPHER;
 	const char *url = "gopher://gopher.quux.org/1/";
 	const char *fileName = "example/out.gopher";
 #else
 	const enum protocol_Type pType = PROTOCOL_TYPE_GEMINI;
 	const char *url = "gemini://gemini.circumlunar.space/";
-	const char *fileName = "example/out.gmi";
+	const char *fileName = "example/test.gmi";
+	//const char *fileName = "example/out.gmi";
 #endif
 	(void) url;
 	(void) fileName;
@@ -173,9 +174,7 @@ main(int argc, char **argv)
 			{
 				protocol_Xcb_offset(&pxcb, 0, -mainAreaYoffset);
 				mainAreaYMax = protocol_Xcb_render(&pxcb,
-						&parser,
-						cnEvent->width - 75,
-						cnEvent->height);
+						&parser);
 				ui_xcb_Pixmap_render(&mainArea, 0, 0);
 				ui_xcb_Pixmap_render(&doubleBuffer, 0, 0);
 				mainAreaYMaxDuringRZ = mainAreaYMax;

@@ -24,6 +24,8 @@ struct p_gemini_Parser_ContentLink
 {
 	char *text;
 	char *link;
+
+	uint32_t xcbButtonIndex;
 };
 
 struct p_gemini_Parser_ContentHead

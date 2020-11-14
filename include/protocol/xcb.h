@@ -43,9 +43,7 @@ void protocol_Xcb_itemsInit(struct protocol_Xcb *pgxcb,
 		struct protocol_Parser *parser);
 
 uint32_t protocol_Xcb_render(struct protocol_Xcb *pgxcb,
-		const struct protocol_Parser *parser,
-		const uint32_t width,
-		const uint32_t height);
+		const struct protocol_Parser *parser);
 
 void protocol_Xcb_scroll(struct protocol_Xcb *pgxcb,
 		const struct protocol_Parser *parser);

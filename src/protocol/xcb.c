@@ -71,15 +71,13 @@ protocol_Xcb_itemsInit(struct protocol_Xcb *pgxcb,
 
 uint32_t
 protocol_Xcb_render(struct protocol_Xcb *pgxcb,
-		const struct protocol_Parser *parser,
-		const uint32_t width,
-		const uint32_t height)
+		const struct protocol_Parser *parser)
 {
 	uint32_t retVal = 0;
 	switch (parser->type)
 	{
 	case PROTOCOL_TYPE_GEMINI:
-		retVal = p_gemini_Xcb_render(pgxcb, &parser->protocol.gemini, width, height);
+		retVal = p_gemini_Xcb_render(pgxcb, &parser->protocol.gemini, false);
 		break;
 	case PROTOCOL_TYPE_GOPHER:
 		retVal = p_gopher_Xcb_render(pgxcb, &parser->protocol.gopher, false);
@@ -100,13 +98,14 @@ protocol_Xcb_scroll(struct protocol_Xcb *pgxcb,
 	switch (parser->type)
 	{
 	case PROTOCOL_TYPE_GEMINI:
-		//p_gemini_Xcb_render(pgxcb, &parser->protocol.gemini);
+		p_gemini_Xcb_render(pgxcb, &parser->protocol.gemini, true);
 		break;
 	case PROTOCOL_TYPE_GOPHER:
 		p_gopher_Xcb_render(pgxcb, &parser->protocol.gopher, true);
 		break;
 	default:
 		protocol_Type_assert(parser->type);
+		return;
 	}
 	ui_xcb_Pixmap_render(&pgxcb->pixmap, pgxcb->offsetX, pgxcb->offsetY);
 }
