@@ -25,9 +25,12 @@ void ui_xcb_Button_init(struct ui_xcb_Button *button,
 		struct ui_xcb_Context *context,
 		const xcb_window_t parentWindow,
 		const uint32_t backgroundColor,
+		const uint32_t textColor,
 		const uint32_t borderColor,
 		const uint32_t borderWidth,
-		const xcb_rectangle_t rect);
+		const xcb_rectangle_t rect,
+		const uint32_t textX,
+		const uint32_t textY);
 
 void ui_xcb_Button_deinit(struct ui_xcb_Button *button);
 void ui_xcb_Button_setXY(struct ui_xcb_Button *button,
@@ -35,6 +38,7 @@ void ui_xcb_Button_setXY(struct ui_xcb_Button *button,
 bool ui_xcb_Button_pressed(struct ui_xcb_Button *button,
 		const xcb_window_t eventWindow);
 void ui_xcb_Button_render(struct ui_xcb_Button *button);
+void ui_xcb_Button_show(struct ui_xcb_Button *button, const bool show);
 
 #endif // UI_XCB_BUTTON_H
 

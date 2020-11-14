@@ -57,5 +57,8 @@ double ui_xcb_Text_renderWrapped(struct ui_xcb_Text *text,
 		const uint32_t maxWidth,
 		const uint32_t spacing);
 
+uint32_t ui_xcb_Text_calcWidth(struct ui_xcb_Text *text,
+		const char *str);
+
 #endif // UI_XCB_TEXT_H
 

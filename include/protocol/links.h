@@ -43,7 +43,8 @@ bool protocol_Links_clicked(struct protocol_Links *links,
 
 void protocol_Links_render(struct protocol_Links *links,
 		const uint32_t index,
-		const int16_t x, const int16_t y);
+		const int16_t x, const int16_t y,
+		const uint32_t width, const uint32_t height);
 
 #endif // PROTOCOL_LINKS_H
 

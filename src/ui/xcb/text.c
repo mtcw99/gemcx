@@ -223,3 +223,18 @@ ui_xcb_Text_renderWrapped(struct ui_xcb_Text *text,
 	return wrY - y;
 }
 
+uint32_t
+ui_xcb_Text_calcWidth(struct ui_xcb_Text *text,
+		const char *str)
+{
+	const uint32_t strL = strlen(str);
+	uint32_t totalWidth = 0;
+
+	for (uint32_t i = 0; i < strL; ++i)
+	{
+		totalWidth += text->symbolsWidth[(uint32_t) str[i]];
+	}
+
+	return totalWidth;
+}
+

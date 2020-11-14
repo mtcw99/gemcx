@@ -15,22 +15,31 @@ protocol_Xcb_init(struct protocol_Xcb *pgxcb,
 		struct ui_xcb_Context *context,
 		struct ui_xcb_Text *font,
 		const xcb_drawable_t drawable,
-		const xcb_window_t parentWindow,
+		struct ui_xcb_Window *window,
 		const uint32_t width,
 		const uint32_t height,
 		const uint32_t backgroundColor,
 		const enum protocol_Type type)
 {
 	pgxcb->type = type;
+
+	switch (type)
+	{
+	case PROTOCOL_TYPE_GOPHER:
+		pgxcb->font = &font[4];
+		break;
+	default:
+		pgxcb->font = font;
+	}
+
 	ui_xcb_Pixmap_init(&pgxcb->pixmap, context, drawable, width, height,
 			backgroundColor);
-	protocol_Links_init(&pgxcb->links, context, font, backgroundColor);
+	protocol_Links_init(&pgxcb->links, context, pgxcb->font, backgroundColor);
 	pgxcb->offsetX = 0;
 	pgxcb->offsetY = 0;
-	pgxcb->parentWindow = parentWindow;
 
+	pgxcb->window = window;
 	pgxcb->context = context;
-	pgxcb->font = font;
 }
 
 void
@@ -82,6 +91,24 @@ protocol_Xcb_render(struct protocol_Xcb *pgxcb,
 
 	ui_xcb_Pixmap_render(&pgxcb->pixmap, pgxcb->offsetX, pgxcb->offsetY);
 	return retVal;
+}
+
+void
+protocol_Xcb_scroll(struct protocol_Xcb *pgxcb,
+		const struct protocol_Parser *parser)
+{
+	switch (parser->type)
+	{
+	case PROTOCOL_TYPE_GEMINI:
+		//p_gemini_Xcb_scroll(pgxcb, &parser->protocol.gemini);
+		break;
+	case PROTOCOL_TYPE_GOPHER:
+		p_gopher_Xcb_scroll(pgxcb, &parser->protocol.gopher);
+		break;
+	default:
+		protocol_Type_assert(parser->type);
+	}
+	ui_xcb_Pixmap_render(&pgxcb->pixmap, pgxcb->offsetX, pgxcb->offsetY);
 }
 
 void

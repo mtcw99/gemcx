@@ -36,6 +36,7 @@ protocol_Links_deinit(struct protocol_Links *links)
 		for (uint32_t i = 0; i < links->length; ++i)
 		{
 			struct protocol_Link *link = &links->links[i];
+			ui_xcb_Button_deinit(&link->button);
 			util_memory_free(link->str);
 			util_memory_free(link->ref);
 		}
@@ -82,13 +83,18 @@ protocol_Links_new(struct protocol_Links *links,
 	strcpy(link->ref, ref);
 
 	memset(&link->button, 0, sizeof(struct ui_xcb_Button));
+	const uint32_t calcStrWidth = ui_xcb_Text_calcWidth(links->font, str);
 	ui_xcb_Button_init(&link->button,
 			link->str,
 			links->font,
 			links->context,
 			parentWindow,
-			links->backgroundColor, 0x000000, 0,
-			(const xcb_rectangle_t) { 0, 0, 150, 50 });
+			links->backgroundColor,
+			0xFFFFFF,	// Text color
+			0x000000, 0,
+			(const xcb_rectangle_t) { 0, 0, calcStrWidth + 20, 20 },
+			0, 0);
+	ui_xcb_Button_show(&link->button, false);
 
 	return index;
 }
@@ -105,11 +111,20 @@ protocol_Links_clicked(struct protocol_Links *links,
 void
 protocol_Links_render(struct protocol_Links *links,
 		const uint32_t index,
-		const int16_t x, const int16_t y)
+		const int16_t x, const int16_t y,
+		const uint32_t width, const uint32_t height)
 {
 	struct protocol_Link *link = &links->links[index];
-	// TODO: segfault
-	//ui_xcb_Button_setXY(&link->button, x, y);
-	//ui_xcb_Button_render(&link->button);
+	if ((x > 0) && (y > 0) && (x < width) && (y < height))
+	{
+		//printf("SHOW: %d %d %d\n", index, x, y);
+		ui_xcb_Button_show(&link->button, true);
+		ui_xcb_Button_setXY(&link->button, x, y);
+		ui_xcb_Button_render(&link->button);
+	}
+	else
+	{
+		ui_xcb_Button_show(&link->button, false);
+	}
 }
 

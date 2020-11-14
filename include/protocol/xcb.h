@@ -20,9 +20,9 @@ struct protocol_Xcb
 	struct protocol_Links links;
 	uint32_t offsetX;
 	uint32_t offsetY;
-	xcb_window_t parentWindow;
 
 	// Just Pointers
+	struct ui_xcb_Window *window;
 	struct ui_xcb_Context *context;
 	struct ui_xcb_Text *font;
 };
@@ -31,7 +31,7 @@ void protocol_Xcb_init(struct protocol_Xcb *pgxcb,
 		struct ui_xcb_Context *context,
 		struct ui_xcb_Text *font,
 		const xcb_drawable_t drawable,
-		const xcb_window_t parentWindow,
+		struct ui_xcb_Window *window,
 		const uint32_t width,
 		const uint32_t height,
 		const uint32_t backgroundColor,
@@ -46,6 +46,9 @@ uint32_t protocol_Xcb_render(struct protocol_Xcb *pgxcb,
 		const struct protocol_Parser *parser,
 		const uint32_t width,
 		const uint32_t height);
+
+void protocol_Xcb_scroll(struct protocol_Xcb *pgxcb,
+		const struct protocol_Parser *parser);
 
 void protocol_Xcb_offset(struct protocol_Xcb *pgxcb,
 		const uint32_t offsetX, const uint32_t offsetY);

@@ -106,8 +106,11 @@ main(int argc, char **argv)
 	uint32_t mainAreaXMax = 0;
 
 	struct protocol_Xcb pxcb = { 0 };
-	protocol_Xcb_init(&pxcb, &context, text, mainArea.pixmap, window.id,
+	protocol_Xcb_init(&pxcb, &context,
+			text, mainArea.pixmap, &window,
 			1920, 10080, 0x222222, pType);
+
+	protocol_Xcb_itemsInit(&pxcb, &parser);
 
 #if 0
 	struct ui_xcb_Button testButton = { 0 };
@@ -145,8 +148,6 @@ main(int argc, char **argv)
 			{
 				if (!window.mapInit)
 				{
-					protocol_Xcb_itemsInit(&pxcb, &parser);
-
 					window.mapInit = true;
 				}
 			}
@@ -158,6 +159,16 @@ main(int argc, char **argv)
 			xcb_configure_notify_event_t *cnEvent =
 				(xcb_configure_notify_event_t *) event.generic_event;
 
+			// Ignore XCB_CONFIGURE_NOTIFY event if not window
+			if (window.id != cnEvent->window)
+			{
+				break;
+			}
+
+			ui_xcb_Window_updateInfo(&window,
+					cnEvent->width,
+					cnEvent->height);
+
 			if (prevWidth != cnEvent->width)
 			{
 				protocol_Xcb_offset(&pxcb, 0, -mainAreaYoffset);
@@ -165,8 +176,8 @@ main(int argc, char **argv)
 						&parser,
 						cnEvent->width - 75,
 						cnEvent->height);
-
 				ui_xcb_Pixmap_render(&mainArea, 0, 0);
+				ui_xcb_Pixmap_render(&doubleBuffer, 0, 0);
 				mainAreaXMaxDuringRZ = mainAreaXMax;
 			}
 			else
@@ -183,30 +194,31 @@ main(int argc, char **argv)
 				mainAreaXMax -= cnEvent->height;
 			}
 			prevWidth = cnEvent->width;
-
-			ui_xcb_Window_updateInfo(&window, cnEvent->width,
-					cnEvent->height);
 		} 	break;
 		case XCB_EXPOSE:
 		{
 			xcb_expose_event_t *expose = (xcb_expose_event_t *) event.generic_event;
 			(void) expose;
 			ui_xcb_Pixmap_render(&doubleBuffer, 0, 0);
-			//ui_xcb_Button_render(&testButton);
 		}	break;
 		case XCB_BUTTON_PRESS:
 		{
 			static const uint32_t offsetSpeed = 40;
-			xcb_button_press_event_t *bp = (xcb_button_press_event_t *) event.generic_event;
+			xcb_button_press_event_t *bp =
+				(xcb_button_press_event_t *) event.generic_event;
+
 			switch (bp->detail)
 			{
 			case 1:	// Left-mouse click
-#if 0
-				if (ui_xcb_Button_pressed(&testButton, bp->event))
+				for (uint32_t i = 0; i < pxcb.links.length; ++i)
 				{
-					printf("testButton pressed\n");
+					if (protocol_Links_clicked(&pxcb.links, i, bp->event))
+					{
+						const struct protocol_Link *link = &pxcb.links.links[i];
+						printf("%d: ref: %s\n", i, link->ref);
+						break;
+					}
 				}
-#endif
 				break;
 			case 4:	// Scroll up
 				mainAreaYoffset -= offsetSpeed;
@@ -230,9 +242,11 @@ main(int argc, char **argv)
 			{
 			case 4:
 			case 5:
-				ui_xcb_Pixmap_render(&mainArea, 0, -mainAreaYoffset);
+				protocol_Xcb_offset(&pxcb, 0, -mainAreaYoffset);
+				protocol_Xcb_scroll(&pxcb, &parser);
+
+				ui_xcb_Pixmap_render(&mainArea, 0, 0);
 				ui_xcb_Pixmap_render(&doubleBuffer, 0, 0);
-				//ui_xcb_Button_setXY(&testButton, 10, -mainAreaYoffset + 10);
 				break;
 			default:
 				break;
