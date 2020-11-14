@@ -92,7 +92,7 @@ protocol_Links_new(struct protocol_Links *links,
 			links->backgroundColor,
 			0xFFFFFF,	// Text color
 			0x000000, 0,
-			(const xcb_rectangle_t) { 0, 0, calcStrWidth + 20, 20 },
+			(const xcb_rectangle_t) { 0, 0, calcStrWidth, 20 },
 			0, 0);
 	ui_xcb_Button_show(&link->button, false);
 

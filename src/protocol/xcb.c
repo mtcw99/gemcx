@@ -82,7 +82,7 @@ protocol_Xcb_render(struct protocol_Xcb *pgxcb,
 		retVal = p_gemini_Xcb_render(pgxcb, &parser->protocol.gemini, width, height);
 		break;
 	case PROTOCOL_TYPE_GOPHER:
-		retVal = p_gopher_Xcb_render(pgxcb, &parser->protocol.gopher);
+		retVal = p_gopher_Xcb_render(pgxcb, &parser->protocol.gopher, false);
 		break;
 	default:
 		protocol_Type_assert(parser->type);
@@ -100,10 +100,10 @@ protocol_Xcb_scroll(struct protocol_Xcb *pgxcb,
 	switch (parser->type)
 	{
 	case PROTOCOL_TYPE_GEMINI:
-		//p_gemini_Xcb_scroll(pgxcb, &parser->protocol.gemini);
+		//p_gemini_Xcb_render(pgxcb, &parser->protocol.gemini);
 		break;
 	case PROTOCOL_TYPE_GOPHER:
-		p_gopher_Xcb_scroll(pgxcb, &parser->protocol.gopher);
+		p_gopher_Xcb_render(pgxcb, &parser->protocol.gopher, true);
 		break;
 	default:
 		protocol_Type_assert(parser->type);

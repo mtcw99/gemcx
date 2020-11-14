@@ -103,7 +103,7 @@ main(int argc, char **argv)
 	struct ui_xcb_Pixmap mainArea = { 0 };
 	ui_xcb_Pixmap_init(&mainArea, &context, doubleBuffer.pixmap, 1920, 10080, 0x222222);
 	int32_t mainAreaYoffset = 0;
-	uint32_t mainAreaXMax = 0;
+	uint32_t mainAreaYMax = 0;
 
 	struct protocol_Xcb pxcb = { 0 };
 	protocol_Xcb_init(&pxcb, &context,
@@ -155,7 +155,7 @@ main(int argc, char **argv)
 		case XCB_CONFIGURE_NOTIFY:
 		{
 			static uint32_t prevWidth = 0;
-			static uint32_t mainAreaXMaxDuringRZ = 0;
+			static uint32_t mainAreaYMaxDuringRZ = 0;
 			xcb_configure_notify_event_t *cnEvent =
 				(xcb_configure_notify_event_t *) event.generic_event;
 
@@ -172,26 +172,28 @@ main(int argc, char **argv)
 			if (prevWidth != cnEvent->width)
 			{
 				protocol_Xcb_offset(&pxcb, 0, -mainAreaYoffset);
-				mainAreaXMax = protocol_Xcb_render(&pxcb,
+				mainAreaYMax = protocol_Xcb_render(&pxcb,
 						&parser,
 						cnEvent->width - 75,
 						cnEvent->height);
 				ui_xcb_Pixmap_render(&mainArea, 0, 0);
 				ui_xcb_Pixmap_render(&doubleBuffer, 0, 0);
-				mainAreaXMaxDuringRZ = mainAreaXMax;
+				mainAreaYMaxDuringRZ = mainAreaYMax;
 			}
 			else
 			{
-				mainAreaXMax = mainAreaXMaxDuringRZ;
+				mainAreaYMax = mainAreaYMaxDuringRZ;
 			}
 
-			if (cnEvent->height > mainAreaXMax)
+			if (cnEvent->height > mainAreaYMax)
 			{
-				mainAreaXMax = 0;
+				// Window height more than content height
+				mainAreaYMax = 0;
 			}
 			else
 			{
-				mainAreaXMax -= cnEvent->height;
+				// Content height more than window height
+				mainAreaYMax -= cnEvent->height - ((uint32_t) ((float) cnEvent->height * 0.5));
 			}
 			prevWidth = cnEvent->width;
 		} 	break;
@@ -229,9 +231,9 @@ main(int argc, char **argv)
 				break;
 			case 5:	// Scroll down
 				mainAreaYoffset += offsetSpeed;
-				if (mainAreaYoffset >= mainAreaXMax)
+				if (mainAreaYoffset >= mainAreaYMax)
 				{
-					mainAreaYoffset = mainAreaXMax;
+					mainAreaYoffset = mainAreaYMax;
 				}
 				break;
 			default:
@@ -244,6 +246,12 @@ main(int argc, char **argv)
 			case 5:
 				protocol_Xcb_offset(&pxcb, 0, -mainAreaYoffset);
 				protocol_Xcb_scroll(&pxcb, &parser);
+				if (bp->detail == 4)
+				{
+					// Rerender buttons: scroll up apparently
+					// breaks rendering but not down
+					protocol_Xcb_scroll(&pxcb, &parser);
+				}
 
 				ui_xcb_Pixmap_render(&mainArea, 0, 0);
 				ui_xcb_Pixmap_render(&doubleBuffer, 0, 0);
