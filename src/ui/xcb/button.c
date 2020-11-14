@@ -1,5 +1,7 @@
 #include "ui/xcb/button.h"
 
+#include "ui/xcb/cursor.h"
+
 void
 ui_xcb_Button_init(struct ui_xcb_Button *button,
 		const char *str,
@@ -32,6 +34,9 @@ ui_xcb_Button_init(struct ui_xcb_Button *button,
 	ui_xcb_Text_render(font, button->pixmap.pixmap, str,
 			textX, textY, 
 			textColor, 1.0);
+
+	// Set pointer cursor to button subwindow
+	ui_xcb_Cursor_set(context, button->subwindow.id, "pointer");
 
 	button->text = font;
 	button->context = context;

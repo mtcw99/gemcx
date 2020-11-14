@@ -26,6 +26,7 @@ src/ui/xcb/event.c
 src/ui/xcb/text.c
 src/ui/xcb/pixmap.c
 src/ui/xcb/button.c
+src/ui/xcb/cursor.c
 src/util/memory.c
 src/util/socket.c
 endef
@@ -37,7 +38,7 @@ CFLAGS = -std=c99 -pedantic -Wall
 CFLAGS_DEBUG = -O0 -g -DDEBUG
 CFLAGS_RELEASE = -Os -flto
 INCLUDEDIR = include/
-LIBS = -D_POSIX_C_SOURCE=200809L -lssl -lcrypto -lxcb -lxkbcommon -lxkbcommon-x11
+LIBS = -D_POSIX_C_SOURCE=200809L -lssl -lcrypto -lxcb -lxcb-cursor -lxkbcommon -lxkbcommon-x11
 PKG = pangocairo fontconfig
 PKGCFG = `pkg-config --libs --cflags ${PKG}`
 VERSION = 0.1

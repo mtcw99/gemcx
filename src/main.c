@@ -16,6 +16,7 @@
 #include "ui/xcb/pixmap.h"
 #include "ui/xcb/subwindow.h"
 #include "ui/xcb/button.h"
+#include "ui/xcb/cursor.h"
 
 int
 main(int argc, char **argv)
@@ -119,6 +120,8 @@ main(int argc, char **argv)
 			&context, window.id, 0xCCCCCC, 0x000000, 3,
 			(const xcb_rectangle_t) { 10, 10, 150, 50 });
 #endif
+
+	//ui_xcb_Cursor_set(&context, window.id, "pointer");
 
 	xcb_flush(context.connection);
 	while (ui_xcb_Event_waitForEvent(&event))
