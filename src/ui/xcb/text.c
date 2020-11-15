@@ -48,8 +48,8 @@ ui_xcb_Text_init(struct ui_xcb_Text *text,
 	int32_t width = 0;
 	// Set base width
 	pango_layout_set_text(text->pa_layout, tmpStr, -1);
-	cairo_move_to(text->cr, 0, 0);
-	pango_cairo_update_layout(text->cr, text->pa_layout);
+	//cairo_move_to(text->cr, 0, 0);
+	//pango_cairo_update_layout(text->cr, text->pa_layout);
 	pango_layout_get_pixel_size(text->pa_layout, &width, NULL);
 	const uint32_t baseWidth = width;
 	text->mostSymbolsWidth = 0;
@@ -58,8 +58,8 @@ ui_xcb_Text_init(struct ui_xcb_Text *text,
 	{
 		tmpStr[2] = c;
 		pango_layout_set_text(text->pa_layout, tmpStr, -1);
-		cairo_move_to(text->cr, 0, 0);
-		pango_cairo_update_layout(text->cr, text->pa_layout);
+		//cairo_move_to(text->cr, 0, 0);
+		//pango_cairo_update_layout(text->cr, text->pa_layout);
 		pango_layout_get_pixel_size(text->pa_layout, &width, NULL);
 
 		text->symbolsWidth[c] = width - baseWidth;
@@ -100,47 +100,11 @@ ui_xcb_Text_render(struct ui_xcb_Text *text,
 		const uint32_t color,
 		const double alpha)
 {
-	xcb_get_geometry_cookie_t geom_cookie = xcb_get_geometry(
-			text->context->connection,
-			drawable);
-
-	xcb_get_geometry_reply_t *geom_reply = xcb_get_geometry_reply(
-			text->context->connection,
-			geom_cookie,
-			NULL);
-
-	if (!geom_reply)
-	{
-		fprintf(stderr, "ERROR: Cannot get gemetry of drawable %d.\n",
-				drawable);
-		return;
-	}
-
-	cairo_surface_flush(text->cr_surface);
-	cairo_xcb_surface_set_drawable(text->cr_surface,
-			drawable,
-			geom_reply->width,
-			geom_reply->height);
-
-	//printf("geom_reply: %d %d\n", geom_reply->width, geom_reply->height);
-
-	free(geom_reply);
-	geom_reply = NULL;
-
-	struct ui_xcb_ScaleColor scCol = ui_xcb_Text__u32ToScaleColorA(color, alpha);
-	//printf("scCol: %.2f %.2f %.2f %.2f\n", scCol.red, scCol.green, scCol.blue, scCol.alpha);
-	pango_layout_set_text(text->pa_layout, str, -1);
-	cairo_set_source_rgba(text->cr, scCol.red, scCol.green, scCol.blue, scCol.alpha);
-	cairo_move_to(text->cr, x, y);
-	pango_cairo_update_layout(text->cr, text->pa_layout);
-	//pango_layout_get_pixel_size(text->pa_layout, &text->width, &text->height);
-	pango_cairo_show_layout(text->cr, text->pa_layout);
-
-	cairo_surface_flush(text->cr_surface);
+	ui_xcb_Text_renderWrapped(text, drawable, str, x, y, color, alpha,
+			false, -1, 0, true);
 }
 
-// TODO FIX: Wrapping off-screen-width bug
-double
+int32_t
 ui_xcb_Text_renderWrapped(struct ui_xcb_Text *text,
 		const xcb_drawable_t drawable,
 		const char *str,
@@ -148,89 +112,74 @@ ui_xcb_Text_renderWrapped(struct ui_xcb_Text *text,
 		const double y,
 		const uint32_t color,
 		const double alpha,
+		const bool wrapped,
 		const uint32_t maxWidth,
 		const uint32_t spacing,
 		const bool render)
 {
-	const uint32_t strSize = strlen(str);
-	uint32_t width = 0;
+	int32_t height = spacing;
 
-	char *tmpStr = calloc(sizeof(char), strSize + 1);
-	strcpy(tmpStr, str);
-	uint32_t splitIdx[128] = { 0 };
-	uint32_t splitIdxSize = 0;
-	uint32_t nextMaxWidth = maxWidth;
-	double wrY = y;
-
-	for (uint32_t i = 0, prevWS = 0; i < strSize; ++i)
-	{
-		if ((uint32_t) str[i] < 127)
-		{
-			width += text->symbolsWidth[(uint32_t) str[i]];
-		}
-		else
-		{
-			width += text->mostSymbolsWidth;
-		}
-
-		if (str[i] != ' ' && str[i] != '\n')
-		{
-			continue;
-		}
-
-		const uint32_t whspIdx = i;
-		tmpStr[whspIdx] = '\0';
-
-		if ((width >= nextMaxWidth) && (i > 0))
-		{
-#if 0
-			printf("(%d/%d) [%d] tmpStr: %s\n", width, nextMaxWidth, i -1, tmpStr);
-#endif
-			const uint32_t splIndex = splitIdxSize;
-			splitIdx[splitIdxSize++] = prevWS;
-			nextMaxWidth += maxWidth;
-
-			const uint32_t strIdxL = (splIndex == 0) ? 0 : (splitIdx[splIndex - 1] + 1);
-			const uint32_t strIdxR = splitIdx[splIndex];
-			const uint32_t splLen = strIdxR - strIdxL;
-
-			//printf("SPLIT at: %d - %d (%d)\n", strIdxL, strIdxR, splLen);
-			//strncpy(tmpStr, str + strIdxL, splLen);
-			tmpStr[splLen + strIdxL] = '\0';
-			if (render)
-			{
-				ui_xcb_Text_render(text, drawable,
-						tmpStr + strIdxL, x, wrY, color, alpha);
-			}
-			wrY += spacing; // spacing
-			tmpStr[splLen + strIdxL] = ' ';
-		}
-		tmpStr[whspIdx] = ' ';
-		prevWS = whspIdx;
-	}
-
-	const uint32_t splIndex = splitIdxSize;
-	splitIdx[splitIdxSize++] = strSize;
-	const uint32_t strIdxL = (splIndex == 0) ? 0 : (splitIdx[splIndex - 1] + 1);
-	const uint32_t strIdxR = splitIdx[splIndex];
-	const uint32_t splLen = strIdxR - strIdxL;
-
-	//printf("SPLIT at: %d - %d (%d)\n", strIdxL, strIdxR, splLen);
-	//strncpy(tmpStr, str + strIdxL, splLen);
-	tmpStr[splLen + strIdxL] = '\0';
 	if (render)
 	{
-		ui_xcb_Text_render(text, drawable,
-				tmpStr + strIdxL, x, wrY, color, alpha);
+		xcb_get_geometry_cookie_t geom_cookie = xcb_get_geometry(
+				text->context->connection,
+				drawable);
+
+		xcb_get_geometry_reply_t *geom_reply = xcb_get_geometry_reply(
+				text->context->connection,
+				geom_cookie,
+				NULL);
+
+		if (!geom_reply)
+		{
+			fprintf(stderr, "ERROR: Cannot get gemetry of drawable %d.\n",
+					drawable);
+			return spacing;
+		}
+
+		cairo_surface_flush(text->cr_surface);
+		cairo_xcb_surface_set_drawable(text->cr_surface,
+				drawable,
+				geom_reply->width,
+				geom_reply->height);
+
+		//printf("geom_reply: %d %d\n", geom_reply->width, geom_reply->height);
+
+		free(geom_reply);
+		geom_reply = NULL;
 	}
-	wrY += spacing; // spacing
 
-	free(tmpStr);
+	struct ui_xcb_ScaleColor scCol = ui_xcb_Text__u32ToScaleColorA(color, alpha);
+	//printf("scCol: %.2f %.2f %.2f %.2f\n", scCol.red, scCol.green, scCol.blue, scCol.alpha);
+	
+	pango_layout_set_text(text->pa_layout, str, -1);
+	if (wrapped)
+	{
+		pango_layout_set_width(text->pa_layout, maxWidth * PANGO_SCALE);
+		pango_layout_set_wrap(text->pa_layout, PANGO_WRAP_WORD);
+	}
+	else
+	{
+		pango_layout_set_width(text->pa_layout, -1);
+	}
 
-	return wrY - y;
+	if (render)
+	{
+		cairo_set_source_rgba(text->cr, scCol.red, scCol.green, scCol.blue, scCol.alpha);
+		cairo_move_to(text->cr, x, y);
+	}
+	pango_cairo_update_layout(text->cr, text->pa_layout);
+	pango_layout_get_pixel_size(text->pa_layout, NULL, &height);
+	if (render)
+	{
+		pango_cairo_show_layout(text->cr, text->pa_layout);
+		cairo_surface_flush(text->cr_surface);
+	}
+
+	return height;
 }
 
-inline double
+inline int32_t
 ui_xcb_Text_fakeRenderWrapped(struct ui_xcb_Text *text,
 		const char *str,
 		const double y,
@@ -238,7 +187,7 @@ ui_xcb_Text_fakeRenderWrapped(struct ui_xcb_Text *text,
 		const uint32_t spacing)
 {
 	return ui_xcb_Text_renderWrapped(text, 0, str, 0, y, 0, 0,
-			maxWidth, spacing, false);
+			true, maxWidth, spacing, false);
 }
 
 uint32_t

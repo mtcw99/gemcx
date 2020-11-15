@@ -10,6 +10,7 @@
 
 #include "ui/xcb/pixmap.h"
 #include "ui/xcb/text.h"
+#include "ui/xcb/subwindow.h"
 
 struct protocol_Xcb
 {
@@ -20,9 +21,11 @@ struct protocol_Xcb
 	struct protocol_Links links;
 	uint32_t offsetX;
 	uint32_t offsetY;
+	uint32_t paddingLeft;
+	uint32_t paddingRight;
 
 	// Just Pointers
-	struct ui_xcb_Window *window;
+	struct ui_xcb_Subwindow *subwindow;
 	struct ui_xcb_Context *context;
 	struct ui_xcb_Text *font;
 };
@@ -31,7 +34,7 @@ void protocol_Xcb_init(struct protocol_Xcb *pgxcb,
 		struct ui_xcb_Context *context,
 		struct ui_xcb_Text *font,
 		const xcb_drawable_t drawable,
-		struct ui_xcb_Window *window,
+		struct ui_xcb_Subwindow *subwindow,
 		const uint32_t width,
 		const uint32_t height,
 		const uint32_t backgroundColor,
@@ -50,6 +53,9 @@ void protocol_Xcb_scroll(struct protocol_Xcb *pgxcb,
 
 void protocol_Xcb_offset(struct protocol_Xcb *pgxcb,
 		const uint32_t offsetX, const uint32_t offsetY);
+
+void protocol_Xcb_padding(struct protocol_Xcb *pgxcb,
+		const uint32_t left, const uint32_t right);
 
 #endif // PROTOCOL_XCB_H
 

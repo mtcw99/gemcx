@@ -15,7 +15,7 @@ protocol_Xcb_init(struct protocol_Xcb *pgxcb,
 		struct ui_xcb_Context *context,
 		struct ui_xcb_Text *font,
 		const xcb_drawable_t drawable,
-		struct ui_xcb_Window *window,
+		struct ui_xcb_Subwindow *subwindow,
 		const uint32_t width,
 		const uint32_t height,
 		const uint32_t backgroundColor,
@@ -38,7 +38,7 @@ protocol_Xcb_init(struct protocol_Xcb *pgxcb,
 	pgxcb->offsetX = 0;
 	pgxcb->offsetY = 0;
 
-	pgxcb->window = window;
+	pgxcb->subwindow = subwindow;
 	pgxcb->context = context;
 }
 
@@ -49,6 +49,7 @@ protocol_Xcb_deinit(struct protocol_Xcb *pgxcb)
 	protocol_Links_deinit(&pgxcb->links);
 	pgxcb->context = NULL;
 	pgxcb->font = NULL;
+	pgxcb->subwindow = NULL;
 }
 
 void
@@ -116,5 +117,13 @@ protocol_Xcb_offset(struct protocol_Xcb *pgxcb,
 {
 	pgxcb->offsetX = offsetX;
 	pgxcb->offsetY = offsetY;
+}
+
+void
+protocol_Xcb_padding(struct protocol_Xcb *pgxcb,
+		const uint32_t left, const uint32_t right)
+{
+	pgxcb->paddingLeft = left;
+	pgxcb->paddingRight = right;
 }
 

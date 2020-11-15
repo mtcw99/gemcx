@@ -47,18 +47,19 @@ void ui_xcb_Text_render(struct ui_xcb_Text *text,
 		const uint32_t color,
 		const double alpha);
 
-double ui_xcb_Text_renderWrapped(struct ui_xcb_Text *text,
+int32_t ui_xcb_Text_renderWrapped(struct ui_xcb_Text *text,
 		const xcb_drawable_t drawable,
 		const char *str,
 		const double x,
 		const double y,
 		const uint32_t color,
 		const double alpha,
+		const bool wrapped,
 		const uint32_t maxWidth,
 		const uint32_t spacing,
 		const bool render);
 
-double ui_xcb_Text_fakeRenderWrapped(struct ui_xcb_Text *text,
+int32_t ui_xcb_Text_fakeRenderWrapped(struct ui_xcb_Text *text,
 		const char *str,
 		const double y,
 		const uint32_t maxWidth,

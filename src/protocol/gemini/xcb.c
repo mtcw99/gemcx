@@ -12,6 +12,7 @@ p_gemini_Xcb_render(struct protocol_Xcb *pgxcb,
 		ui_xcb_Pixmap_clear(&pgxcb->pixmap);
 	}
 
+	const uint32_t pX = pgxcb->paddingLeft;
 	uint32_t pY = 10;
 	for (uint32_t i = 0; i < parser->length; ++i, pY += yChange)
 	{
@@ -25,7 +26,7 @@ p_gemini_Xcb_render(struct protocol_Xcb *pgxcb,
 				ui_xcb_Text_render(&pgxcb->font[line->content.head.level],
 						pgxcb->pixmap.pixmap,
 						line->content.head.text,
-						10, pY, 0xFFFFFF, 1);
+						pX, pY, 0xFFFFFF, 1);
 			}
 			switch (line->content.head.level)
 			{
@@ -39,25 +40,20 @@ p_gemini_Xcb_render(struct protocol_Xcb *pgxcb,
 		{
 			// TODO
 			const int16_t osetPY = pY + pgxcb->offsetY;
-#if 0
-			ui_xcb_Text_render(&pgxcb->font[0],
-					pgxcb->pixmap.pixmap,
-					line->content.link.text,
-					25, pY, 0xFFFFFF, 1);
-#endif
+
 			if (!scroll)
 			{
 				ui_xcb_Text_render(&pgxcb->font[0],
 						pgxcb->pixmap.pixmap,
 						"►",
-						10, pY, 0xFFFFFF, 1);
+						pX, pY, 0xFFFFFF, 1);
 			}
 
 			protocol_Links_render(&pgxcb->links,
 					line->content.link.xcbButtonIndex,
-					10, osetPY,
-					pgxcb->window->width,
-					pgxcb->window->height);
+					20, osetPY,
+					pgxcb->subwindow->rect.width,
+					pgxcb->subwindow->rect.height);
 
 		}	break;
 		case P_GEMINI_PARSER_TYPE_LIST:
@@ -66,7 +62,7 @@ p_gemini_Xcb_render(struct protocol_Xcb *pgxcb,
 				ui_xcb_Text_render(&pgxcb->font[0],
 						pgxcb->pixmap.pixmap,
 						"*",
-						10, pY, 0xFFFFFF, 1);
+						pX, pY, 0xFFFFFF, 1);
 
 				ui_xcb_Text_render(&pgxcb->font[0],
 						pgxcb->pixmap.pixmap,
@@ -81,11 +77,12 @@ p_gemini_Xcb_render(struct protocol_Xcb *pgxcb,
 
 			if (scroll)
 			{
-				// TODO
 				addY = ui_xcb_Text_fakeRenderWrapped(&pgxcb->font[0],
 						line->content.text,
 						pY,
-						pgxcb->window->width,
+						pgxcb->subwindow->rect.width -
+							pgxcb->paddingLeft -
+							pgxcb->paddingRight,
 						yChange);
 			}
 			else
@@ -93,10 +90,16 @@ p_gemini_Xcb_render(struct protocol_Xcb *pgxcb,
 				addY = ui_xcb_Text_renderWrapped(&pgxcb->font[0],
 						pgxcb->pixmap.pixmap,
 						line->content.text,
-						10, pY,
+						pX,
+						pY,
 						(line->type == P_GEMINI_PARSER_TYPE_TEXT) ? 0xFFFFFF : 0xAAAAAA,
-						1, pgxcb->window->width,
-						yChange, true);
+						1,
+						true,
+						pgxcb->subwindow->rect.width -
+							pgxcb->paddingLeft -
+							pgxcb->paddingRight,
+						yChange,
+						true);
 			}
 
 			pY += addY - yChange;
@@ -107,7 +110,7 @@ p_gemini_Xcb_render(struct protocol_Xcb *pgxcb,
 				ui_xcb_Text_render(&pgxcb->font[4],
 						pgxcb->pixmap.pixmap,
 						line->content.text,
-						10, pY, 0xFFFFFF, 1);
+						pX, pY, 0xFFFFFF, 1);
 			}
 			break;
 		default:
@@ -132,7 +135,7 @@ p_gemini_Xcb_itemsInit(struct protocol_Xcb *pgxcb,
 					&pgxcb->links,
 					line->content.link.text,
 					line->content.link.link,
-					pgxcb->window->id);
+					pgxcb->subwindow->id);
 			break;
 		default:
 			break;

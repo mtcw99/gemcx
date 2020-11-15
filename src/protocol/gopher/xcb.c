@@ -49,8 +49,8 @@ p_gopher_Xcb_render(struct protocol_Xcb *pgxcb,
 			printf("RENDER px: %d\npy: %d\nindex: %d\nox: %d\noy: %d\nwidth: %d\nheight: %d\n\n",
 					pX, pY, line->xcbButtonIndex,
 					osetPX, osetPY,
-					pgxcb->window->width,
-					pgxcb->window->height);
+					pgxcb->subwindow->rect.width,
+					pgxcb->subwindow->rect.height);
 #endif
 			if (!scroll)
 			{
@@ -62,8 +62,8 @@ p_gopher_Xcb_render(struct protocol_Xcb *pgxcb,
 			protocol_Links_render(&pgxcb->links,
 					line->xcbButtonIndex,
 					osetPX, osetPY,
-					pgxcb->window->width,
-					pgxcb->window->height);
+					pgxcb->subwindow->rect.width,
+					pgxcb->subwindow->rect.height);
 
 			pY += 5;
 		}	break;
@@ -102,7 +102,7 @@ p_gopher_Xcb_itemsInit(struct protocol_Xcb *pgxcb,
 #endif
 			line->xcbButtonIndex = protocol_Links_new(&pgxcb->links,
 					line->info, line->selector,
-					pgxcb->window->id);
+					pgxcb->subwindow->id);
 			break;
 		default:
 			break;

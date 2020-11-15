@@ -156,10 +156,11 @@ main(int argc, char **argv)
 
 	struct protocol_Xcb pxcb = { 0 };
 	protocol_Xcb_init(&pxcb, &context,
-			text, mainArea.pixmap, &window,
+			text, mainArea.pixmap, &contentSubWindow,
 			1920, 10080, 0x222222, pType);
 
 	protocol_Xcb_itemsInit(&pxcb, &parser);
+	protocol_Xcb_padding(&pxcb, 10, 10);
 
 	xcb_flush(context.connection);
 	while (ui_xcb_Event_waitForEvent(&event))
