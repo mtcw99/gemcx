@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 #include <xcb/xcb.h>
+#include <xcb/xcb_icccm.h>
 
 #include "ui/xcb/context.h"
 
@@ -35,6 +36,9 @@ bool ui_xcb_Window_init(struct ui_xcb_Window *windoww,
 void ui_xcb_Window_deinit(struct ui_xcb_Window *window);
 void ui_xcb_Window_map(struct ui_xcb_Window *window, const bool map);
 void ui_xcb_Window_updateInfo(struct ui_xcb_Window *window,
+		const uint32_t width,
+		const uint32_t height);
+void ui_xcb_Window_minSize(struct ui_xcb_Window *window,
 		const uint32_t width,
 		const uint32_t height);
 

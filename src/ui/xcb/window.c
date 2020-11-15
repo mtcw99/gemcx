@@ -92,3 +92,17 @@ ui_xcb_Window_updateInfo(struct ui_xcb_Window *window,
 	window->height = height;
 }
 
+void
+ui_xcb_Window_minSize(struct ui_xcb_Window *window,
+		const uint32_t width,
+		const uint32_t height)
+{
+	xcb_size_hints_t hints;
+	xcb_icccm_size_hints_set_min_size(&hints, width, height);
+	xcb_icccm_size_hints_set_max_size(&hints, 1920, 1080);	// TODO get from context
+	xcb_icccm_set_wm_size_hints(window->context->connection,
+			window->id,
+			XCB_ATOM_WM_NORMAL_HINTS,
+			&hints);
+}
+

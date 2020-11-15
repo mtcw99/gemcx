@@ -8,6 +8,7 @@
 #include <xcb/randr.h>
 
 #include "ui/xcb/key.h"
+#include "ui/xcb/monitors.h"
 
 struct ui_xcb_Context
 {
@@ -21,6 +22,7 @@ struct ui_xcb_Context
 	xcb_visualtype_t *	visual_type;
 
 	struct ui_xcb_Key	key;
+	struct ui_xcb_Monitors	monitors;
 
 #if 0
 	xcb_void_cookie_t 	cookie;
@@ -32,6 +34,8 @@ struct ui_xcb_Context
 
 void ui_xcb_Context_init(struct ui_xcb_Context *context);
 void ui_xcb_Context_deinit(struct ui_xcb_Context *context);
+
+void ui_xcb_Context_getRootWH(struct ui_xcb_Context *context);
 
 #endif // UI_XCB_CONTEXT_H
 

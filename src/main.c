@@ -80,8 +80,12 @@ main(int argc, char **argv)
 	struct ui_xcb_Context context = { 0 };
 	ui_xcb_Context_init(&context);
 
+	// TODO: Get full width/height
+	ui_xcb_Monitors_getTotalWH(&context.monitors, NULL, NULL);
+
 	struct ui_xcb_Window window = { 0 };
 	ui_xcb_Window_init(&window, &context, "gemcx");
+	ui_xcb_Window_minSize(&window, 400, 200);
 	ui_xcb_Window_map(&window, true);
 
 	struct ui_xcb_Event event = { 0 };
