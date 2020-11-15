@@ -17,6 +17,7 @@
 #include "ui/xcb/subwindow.h"
 #include "ui/xcb/button.h"
 #include "ui/xcb/cursor.h"
+#include "ui/xcb/subwindow.h"
 
 int
 main(int argc, char **argv)
@@ -99,8 +100,51 @@ main(int argc, char **argv)
 		ui_xcb_Text_init(&text[i], &context, fontConfigs[i]);
 	}
 
+	const int32_t contentSubWindowYDiff = 30;
+
+	// Content sub-window
+	struct ui_xcb_Subwindow contentSubWindow = { 0 };
+	ui_xcb_Subwindow_init(&contentSubWindow, &context, window.id,
+			0x222222, 0xEEEEEE, 0,
+			(const xcb_rectangle_t) {
+				.x = 0,
+				.y = contentSubWindowYDiff,
+				.width = 640,
+				.height = 480
+			},
+			XCB_EVENT_MASK_EXPOSURE 	|
+			XCB_EVENT_MASK_KEY_PRESS 	|
+			XCB_EVENT_MASK_KEY_RELEASE 	|
+			XCB_EVENT_MASK_BUTTON_PRESS 	|
+			XCB_EVENT_MASK_BUTTON_RELEASE);
+	ui_xcb_Subwindow_show(&contentSubWindow, true);
+
+	struct ui_xcb_Subwindow controlBarSubWindow = { 0 };
+	ui_xcb_Subwindow_init(&controlBarSubWindow, &context, window.id,
+			0x111111, 0xEEEEEE, 0,
+			(const xcb_rectangle_t) {
+				.x = 0,
+				.y = 0,
+				.width = 640,
+				.height = contentSubWindowYDiff
+			},
+			XCB_EVENT_MASK_EXPOSURE 	|
+			XCB_EVENT_MASK_KEY_PRESS 	|
+			XCB_EVENT_MASK_KEY_RELEASE 	|
+			XCB_EVENT_MASK_BUTTON_PRESS 	|
+			XCB_EVENT_MASK_BUTTON_RELEASE);
+	ui_xcb_Subwindow_show(&controlBarSubWindow, true);
+
+	struct ui_xcb_Button controlBarMenuButton = { 0 };
+	ui_xcb_Button_init(&controlBarMenuButton, "Menu", &text[0],
+			&context, controlBarSubWindow.id,
+			0x000000, 0xEEEEEE, 0x000000, 0,
+			(const xcb_rectangle_t) { 0, 0, 50, contentSubWindowYDiff },
+			2, 2);
+	ui_xcb_Button_show(&controlBarMenuButton, true);
+
 	struct ui_xcb_Pixmap doubleBuffer = { 0 };
-	ui_xcb_Pixmap_init(&doubleBuffer, &context, window.id, 1920, 1080, 0x000000);
+	ui_xcb_Pixmap_init(&doubleBuffer, &context, contentSubWindow.id, 1920, 1080, 0x000000);
 
 	struct ui_xcb_Pixmap mainArea = { 0 };
 	ui_xcb_Pixmap_init(&mainArea, &context, doubleBuffer.pixmap, 1920, 10080, 0x222222);
@@ -116,15 +160,6 @@ main(int argc, char **argv)
 			1920, 10080, 0x222222, pType);
 
 	protocol_Xcb_itemsInit(&pxcb, &parser);
-
-#if 0
-	struct ui_xcb_Button testButton = { 0 };
-	ui_xcb_Button_init(&testButton, "Test Button", &text[0],
-			&context, window.id, 0xCCCCCC, 0x000000, 3,
-			(const xcb_rectangle_t) { 10, 10, 150, 50 });
-#endif
-
-	//ui_xcb_Cursor_set(&context, window.id, "pointer");
 
 	xcb_flush(context.connection);
 	while (ui_xcb_Event_waitForEvent(&event))
@@ -176,6 +211,14 @@ main(int argc, char **argv)
 					cnEvent->width,
 					cnEvent->height);
 
+			// Update subwindow
+			contentSubWindow.rect.width = cnEvent->width;
+			contentSubWindow.rect.height = cnEvent->height - contentSubWindowYDiff - 2;
+			controlBarSubWindow.rect.width = cnEvent->width;
+
+			ui_xcb_Subwindow_applyAttributes(&contentSubWindow);
+			ui_xcb_Subwindow_applyAttributes(&controlBarSubWindow);
+
 			if (prevWidth != cnEvent->width)
 			{
 				protocol_Xcb_offset(&pxcb, 0, -mainAreaYoffset);
@@ -207,12 +250,22 @@ main(int argc, char **argv)
 			xcb_expose_event_t *expose = (xcb_expose_event_t *) event.generic_event;
 			(void) expose;
 			ui_xcb_Pixmap_render(&doubleBuffer, 0, 0);
+			ui_xcb_Button_render(&controlBarMenuButton);
 		}	break;
 		case XCB_BUTTON_PRESS:
 		{
 			static const uint32_t offsetSpeed = 40;
 			xcb_button_press_event_t *bp =
 				(xcb_button_press_event_t *) event.generic_event;
+
+			if (ui_xcb_Button_pressed(&controlBarMenuButton, bp->event))
+			{
+				if (bp->detail == 1)
+				{
+					// TODO: xcb menu
+					printf("Menu pressed\n");
+				}
+			}
 
 			switch (bp->detail)
 			{
@@ -337,7 +390,7 @@ main(int argc, char **argv)
 	}
 
 	protocol_Xcb_deinit(&pxcb);
-	//ui_xcb_Button_deinit(&testButton);
+	ui_xcb_Button_deinit(&controlBarMenuButton);
 
 	// xcb deinit
 	ui_xcb_Key_deinit(&xkey);
@@ -347,6 +400,8 @@ main(int argc, char **argv)
 	{
 		ui_xcb_Text_deinit(&text[i]);
 	}
+	ui_xcb_Subwindow_deinit(&controlBarSubWindow);
+	ui_xcb_Subwindow_deinit(&contentSubWindow);
 	ui_xcb_Event_deinit(&event);
 	ui_xcb_Window_deinit(&window);
 	ui_xcb_Context_deinit(&context);
