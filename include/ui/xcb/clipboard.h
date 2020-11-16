@@ -18,8 +18,8 @@ enum ui_xcb_Clipboard_ia
 struct ui_xcb_Clipboard
 {
 	xcb_intern_atom_reply_t *replies[UI_XCB_CLIPBOARD_IA__TOTAL];
-	xcb_window_t selectionWindow;
-	xcb_timestamp_t timestamp;
+	xcb_window_t selectionNotifyWindow;
+	xcb_window_t selectionRequestWindow;
 
 	char *content;
 	uint32_t contentLength;
@@ -35,7 +35,12 @@ void ui_xcb_Clipboard_deinit(struct ui_xcb_Clipboard * const restrict clipboard)
 void ui_xcb_Clipboard_selectionNotify(struct ui_xcb_Clipboard * const restrict clipboard,
 		const xcb_selection_notify_event_t * const selNotifyEv);
 
+void ui_xcb_Clipboard_selectionRequest(struct ui_xcb_Clipboard * const restrict clipboard,
+		const xcb_selection_request_event_t * const selReqEv);
+
 void ui_xcb_Clipboard_selectionCovert(struct ui_xcb_Clipboard * const restrict clipboard);
+void ui_xcb_Clipboard_selectionSetOwner(struct ui_xcb_Clipboard * const restrict clipboard);
+void ui_xcb_Clipboard_selectionClear(struct ui_xcb_Clipboard * const restrict clipboard);
 
 #endif // UI_XCB_CLIPBOARD_H
 

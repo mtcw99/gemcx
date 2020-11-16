@@ -52,11 +52,27 @@ ui_xcb_Clipboard_init(struct ui_xcb_Clipboard * const restrict clipboard,
 				NULL);
 	}
 
-	// Create selection window
-	clipboard->selectionWindow = xcb_generate_id(context->connection);
+	// Create selection notify window
+	clipboard->selectionNotifyWindow = xcb_generate_id(context->connection);
 	xcb_create_window(context->connection,
 			context->screen->root_depth,
-			clipboard->selectionWindow,
+			clipboard->selectionNotifyWindow,
+			context->screen->root,
+			0, 0, 1, 1, 0,
+			XCB_COPY_FROM_PARENT,
+			context->screen->root_visual,
+			XCB_CW_BACK_PIXEL | XCB_CW_OVERRIDE_REDIRECT | XCB_CW_EVENT_MASK,
+			(const uint32_t [3]) {
+				context->screen->black_pixel,
+				1,
+				XCB_EVENT_MASK_PROPERTY_CHANGE
+			});
+
+	// Create selection request window
+	clipboard->selectionRequestWindow = xcb_generate_id(context->connection);
+	xcb_create_window(context->connection,
+			context->screen->root_depth,
+			clipboard->selectionRequestWindow,
 			context->screen->root,
 			0, 0, 1, 1, 0,
 			XCB_COPY_FROM_PARENT,
@@ -80,7 +96,9 @@ void
 ui_xcb_Clipboard_deinit(struct ui_xcb_Clipboard * const restrict clipboard)
 {
 	xcb_destroy_window(clipboard->context->connection,
-			clipboard->selectionWindow);
+			clipboard->selectionRequestWindow);
+	xcb_destroy_window(clipboard->context->connection,
+			clipboard->selectionNotifyWindow);
 
 	if (clipboard->content != NULL)
 	{
@@ -126,23 +144,92 @@ ui_xcb_Clipboard_selectionNotify(struct ui_xcb_Clipboard * const restrict clipbo
 					selNotifyEv->property);
 		}
 	}
+
+	ui_xcb_Clipboard_selectionClear(clipboard);
+}
+
+void
+ui_xcb_Clipboard_selectionRequest(struct ui_xcb_Clipboard * const restrict clipboard,
+		const xcb_selection_request_event_t * const selReqEv)
+{
+	if (selReqEv->target != clipboard->replies[UI_XCB_CLIPBOARD_IA_UTF8STRING]->atom ||
+			selReqEv->property == XCB_NONE)
+	{
+		xcb_selection_notify_event_t selNotifyEv = { 0 };
+
+		selNotifyEv.response_type = XCB_SELECTION_NOTIFY;
+		selNotifyEv.requestor = selReqEv->requestor;
+		selNotifyEv.selection = selReqEv->selection;
+		selNotifyEv.target = selReqEv->target;
+		selNotifyEv.property = XCB_NONE;
+		selNotifyEv.time = selReqEv->time;
+
+		xcb_send_event(clipboard->context->connection,
+				true, selReqEv->requestor, XCB_EVENT_MASK_NO_EVENT,
+				(char *) &selNotifyEv);
+		return;
+	}
+
+	xcb_selection_notify_event_t selNotifyEv = { 0 };
+
+	//printf("ui_xcb_Clipboard_selectionRequest\n");
+	xcb_change_property(clipboard->context->connection,
+			XCB_PROP_MODE_REPLACE,
+			selReqEv->requestor,
+			selReqEv->property,
+			clipboard->replies[UI_XCB_CLIPBOARD_IA_UTF8STRING]->atom,
+			8,
+			clipboard->contentLength,
+			clipboard->content);
+
+	xcb_change_window_attributes(clipboard->context->connection,
+			selReqEv->requestor,
+			XCB_CW_EVENT_MASK,
+			(uint32_t []) { 0 });
+
+	selNotifyEv.response_type = XCB_SELECTION_NOTIFY;
+	selNotifyEv.requestor = selReqEv->requestor;
+	selNotifyEv.selection = selReqEv->selection;
+	selNotifyEv.target = selReqEv->target;
+	selNotifyEv.property = selReqEv->property;
+	selNotifyEv.time = selReqEv->time;
+
+	xcb_send_event(clipboard->context->connection,
+			true, selReqEv->requestor, XCB_EVENT_MASK_NO_EVENT,
+			(char *) &selNotifyEv);
+
+	xcb_flush(clipboard->context->connection);
 }
 
 void
 ui_xcb_Clipboard_selectionCovert(struct ui_xcb_Clipboard * const restrict clipboard)
 {
-	clipboard->timestamp = time(NULL);
-
 	xcb_convert_selection(clipboard->context->connection,
-			clipboard->selectionWindow,
+			clipboard->selectionNotifyWindow,
 			clipboard->replies[UI_XCB_CLIPBOARD_IA_CLIPBOARD]->atom,
 			clipboard->replies[UI_XCB_CLIPBOARD_IA_UTF8STRING]->atom,
 			clipboard->replies[UI_XCB_CLIPBOARD_IA_XSEL_DATA]->atom,
-			clipboard->timestamp);
+			XCB_CURRENT_TIME);
 
 	// XCB_ATOM_PRIMARY - primary clipboard selection
 	// UI_XCB_CLIPBOARD_IA_CLIPBOARD - Ctrl-C clipboard selection
+}
 
-	xcb_flush(clipboard->context->connection);
+void
+ui_xcb_Clipboard_selectionSetOwner(struct ui_xcb_Clipboard * const restrict clipboard)
+{
+	xcb_set_selection_owner(clipboard->context->connection,
+			clipboard->selectionRequestWindow,
+			clipboard->replies[UI_XCB_CLIPBOARD_IA_CLIPBOARD]->atom,
+			XCB_CURRENT_TIME);
+}
+
+void
+ui_xcb_Clipboard_selectionClear(struct ui_xcb_Clipboard * const restrict clipboard)
+{
+	xcb_set_selection_owner(clipboard->context->connection,
+			XCB_NONE,
+			clipboard->replies[UI_XCB_CLIPBOARD_IA_CLIPBOARD]->atom,
+			XCB_CURRENT_TIME);
 }
 

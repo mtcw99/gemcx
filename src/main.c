@@ -210,6 +210,7 @@ main(int argc, char **argv)
 		}	break;
 		case XCB_SELECTION_NOTIFY:
 		{
+			// Paste operation
 			ui_xcb_Clipboard_selectionNotify(&clipboard,
 					(xcb_selection_notify_event_t *) event.generic_event);
 			if (clipboard.contentLength > 0)
@@ -231,6 +232,21 @@ main(int argc, char **argv)
 					//printf("content: %s\n", clipboard.content);
 				}
 			}
+		}	break;
+		case XCB_SELECTION_REQUEST:
+		{
+			// Copy operation (TODO)
+			//printf("XCB_SELECTION_REQUEST\n");
+			ui_xcb_Clipboard_selectionRequest(&clipboard,
+					(xcb_selection_request_event_t *) event.generic_event);
+		}	break;
+		case XCB_PROPERTY_NOTIFY:
+		{
+			//printf("XCB_PROPERTY_NOTIFY\n");
+		}	break;
+		case XCB_SELECTION_CLEAR:
+		{
+			//printf("XCB_SELECTION_CLEAR: Lost selection ownership\n");
 		}	break;
 		case XCB_MAP_NOTIFY:
 		{
@@ -383,9 +399,22 @@ main(int argc, char **argv)
 			ui_xcb_Key_set(&xkey, prEv->detail, prEv->state);
 			//printf("key: %s\n", xkey.buffer);
 
-			// PASTE: Ctrl-V
-			if ((xkey.keysymNoMask == XKB_KEY_v) &&
-					(xkey.mask & XCB_KEY_BUT_MASK_CONTROL))
+			// COPY: Ctrl-c (TODO)
+			if ((xkey.mask & XCB_KEY_BUT_MASK_CONTROL) &&
+					(xkey.keysymNoMask == XKB_KEY_c))
+			{
+				clipboard.content = realloc(clipboard.content,
+						sizeof(char) * 16);
+				strcpy(clipboard.content, "TEST123");
+				clipboard.contentLength = strlen("TEST123");
+
+				ui_xcb_Clipboard_selectionSetOwner(&clipboard);
+				break;
+			}
+
+			// PASTE: Ctrl-v
+			if ((xkey.mask & XCB_KEY_BUT_MASK_CONTROL) &&
+					(xkey.keysymNoMask == XKB_KEY_v))
 			{
 				ui_xcb_Clipboard_selectionCovert(&clipboard);
 				break;
