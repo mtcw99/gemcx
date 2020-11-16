@@ -29,6 +29,7 @@ src/ui/xcb/button.c
 src/ui/xcb/cursor.c
 src/ui/xcb/monitors.c
 src/ui/xcb/textInput.c
+src/ui/xcb/clipboard.c
 src/util/memory.c
 src/util/socket.c
 endef

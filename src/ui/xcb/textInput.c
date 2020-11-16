@@ -34,6 +34,8 @@ ui_xcb_TextInput_init(struct ui_xcb_TextInput * const textinput,
 
 	textinput->textColor = textColor;
 	textinput->active = false;
+	textinput->textX = textX;
+	textinput->textY = textY;
 
 	textinput->str = str;
 	textinput->strMax = strMax;
@@ -106,7 +108,8 @@ ui_xcb_TextInput_modify(struct ui_xcb_TextInput * const textinput,
 		textinput->renderWidth = ui_xcb_Text_render(textinput->font,
 				textinput->pixmap.pixmap,
 				textinput->str,
-				0, 0,
+				textinput->textX,
+				textinput->textY,
 				textinput->textColor,
 				1.0).width;
 		ui_xcb_TextInput_render(textinput);

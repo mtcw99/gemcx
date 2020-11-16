@@ -21,6 +21,8 @@ struct ui_xcb_TextInput
 
 	uint32_t textColor;
 	uint32_t renderWidth;
+	uint32_t textX;
+	uint32_t textY;
 
 	bool active;
 

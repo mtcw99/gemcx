@@ -19,6 +19,7 @@
 #include "ui/xcb/cursor.h"
 #include "ui/xcb/subwindow.h"
 #include "ui/xcb/textInput.h"
+#include "ui/xcb/clipboard.h"
 
 int
 main(int argc, char **argv)
@@ -81,6 +82,9 @@ main(int argc, char **argv)
 	struct ui_xcb_Context context = { 0 };
 	ui_xcb_Context_init(&context);
 
+	struct ui_xcb_Clipboard clipboard = { 0 };
+	ui_xcb_Clipboard_init(&clipboard, &context);
+
 	struct ui_xcb_Window window = { 0 };
 	ui_xcb_Window_init(&window, &context, "gemcx");
 	ui_xcb_Window_minSize(&window, 400, 200);
@@ -140,11 +144,11 @@ main(int argc, char **argv)
 	ui_xcb_Subwindow_show(&controlBarSubWindow, true);
 
 	struct ui_xcb_Button controlBarMenuButton = { 0 };
-	ui_xcb_Button_init(&controlBarMenuButton, "Menu", &text[0],
+	ui_xcb_Button_init(&controlBarMenuButton, "gemcx", &text[0],
 			&context, controlBarSubWindow.id,
-			0x000000, 0xEEEEEE, 0x000000, 0,
-			(const xcb_rectangle_t) { 0, 0, 50, contentSubWindowYDiff },
-			2, 2);
+			0x444444, 0xFFFFFF, 0x000000, 0,
+			(const xcb_rectangle_t) { 0, 0, 70, contentSubWindowYDiff },
+			10, 2);
 	ui_xcb_Button_show(&controlBarMenuButton, true);
 
 	char urlStr[256] = { 0 };
@@ -152,17 +156,16 @@ main(int argc, char **argv)
 	ui_xcb_TextInput_init(&urlInput, &context, &text[4],
 			controlBarSubWindow.id,
 			(const xcb_rectangle_t) {
-				.x = 50,
+				.x = 70,
 				.y = 0,
 				.width = 400,
 				.height = contentSubWindowYDiff
 			},
 			0x000000, 0xDDDDDD,
-			2, 2,
+			10, 5,
 			urlStr, sizeof(urlStr));
 
 	// Control top bar ends
-
 	struct ui_xcb_Pixmap doubleBuffer = { 0 };
 	ui_xcb_Pixmap_init(&doubleBuffer, &context, contentSubWindow.id,
 			context.rootWidth, context.rootHeight, 0x000000);
@@ -205,6 +208,11 @@ main(int argc, char **argv)
 				}
 			}
 		}	break;
+		case XCB_SELECTION_NOTIFY:
+		{
+			ui_xcb_Clipboard_selectionNotify(&clipboard,
+					(xcb_selection_notify_event_t *) event.generic_event);
+		}	break;
 		case XCB_MAP_NOTIFY:
 		{
 			xcb_map_notify_event_t *mapEvent =
@@ -238,9 +246,11 @@ main(int argc, char **argv)
 			contentSubWindow.rect.width = cnEvent->width;
 			contentSubWindow.rect.height = cnEvent->height - contentSubWindowYDiff - 2;
 			controlBarSubWindow.rect.width = cnEvent->width;
+			urlInput.subwindow.rect.width = cnEvent->width - 70;
 
 			ui_xcb_Subwindow_applyAttributes(&contentSubWindow);
 			ui_xcb_Subwindow_applyAttributes(&controlBarSubWindow);
+			ui_xcb_Subwindow_applyAttributes(&urlInput.subwindow);
 
 			if (prevWidth != cnEvent->width)
 			{
@@ -354,6 +364,11 @@ main(int argc, char **argv)
 			ui_xcb_Key_set(&xkey, prEv->detail, prEv->state);
 			//printf("key: %s\n", xkey.buffer);
 
+			if (xkey.keysymNoMask == XKB_KEY_F1)
+			{
+				ui_xcb_Clipboard_selectionCovert(&clipboard);
+			}
+
 			ui_xcb_TextInput_modify(&urlInput, &xkey);
 
 			switch (xkey.keysymNoMask)
@@ -432,6 +447,7 @@ main(int argc, char **argv)
 	ui_xcb_Subwindow_deinit(&contentSubWindow);
 	ui_xcb_Event_deinit(&event);
 	ui_xcb_Window_deinit(&window);
+	ui_xcb_Clipboard_deinit(&clipboard);
 	ui_xcb_Context_deinit(&context);
 
 	ui_xcb_Text_GDEINIT();
