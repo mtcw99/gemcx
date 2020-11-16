@@ -71,6 +71,20 @@ ui_xcb_TextInput_render(struct ui_xcb_TextInput * const textinput)
 			0);
 }
 
+static void
+ui_xcb_TextInput__renderTextToPixmap(struct ui_xcb_TextInput * const textinput)
+{
+	ui_xcb_Pixmap_clear(&textinput->pixmap);
+	textinput->renderWidth = ui_xcb_Text_render(textinput->font,
+			textinput->pixmap.pixmap,
+			textinput->str,
+			textinput->textX,
+			textinput->textY,
+			textinput->textColor,
+			1.0).width;
+	ui_xcb_TextInput_render(textinput);
+}
+
 void
 ui_xcb_TextInput_modify(struct ui_xcb_TextInput * const textinput,
 		const struct ui_xcb_Key * const xkey)
@@ -104,15 +118,20 @@ ui_xcb_TextInput_modify(struct ui_xcb_TextInput * const textinput,
 
 	if (reRender)
 	{
-		ui_xcb_Pixmap_clear(&textinput->pixmap);
-		textinput->renderWidth = ui_xcb_Text_render(textinput->font,
-				textinput->pixmap.pixmap,
-				textinput->str,
-				textinput->textX,
-				textinput->textY,
-				textinput->textColor,
-				1.0).width;
-		ui_xcb_TextInput_render(textinput);
+		ui_xcb_TextInput__renderTextToPixmap(textinput);
+	}
+}
+
+void
+ui_xcb_TextInput_append(struct ui_xcb_TextInput * const textinput,
+		const char *str,
+		const uint32_t strLength)
+{
+	if ((textinput->strLen + strLength) < textinput->strMax)
+	{
+		strcat(textinput->str, str);
+		textinput->strLen += strLength;
+		ui_xcb_TextInput__renderTextToPixmap(textinput);
 	}
 }
 

@@ -27,15 +27,15 @@ struct ui_xcb_Clipboard
 	struct ui_xcb_Context *context;
 };
 
-void ui_xcb_Clipboard_init(struct ui_xcb_Clipboard * const clipboard,
+void ui_xcb_Clipboard_init(struct ui_xcb_Clipboard * const restrict clipboard,
 		struct ui_xcb_Context * const context);
 
-void ui_xcb_Clipboard_deinit(struct ui_xcb_Clipboard * const clipboard);
+void ui_xcb_Clipboard_deinit(struct ui_xcb_Clipboard * const restrict clipboard);
 
-void ui_xcb_Clipboard_selectionNotify(struct ui_xcb_Clipboard * const clipboard,
+void ui_xcb_Clipboard_selectionNotify(struct ui_xcb_Clipboard * const restrict clipboard,
 		const xcb_selection_notify_event_t * const selNotifyEv);
 
-void ui_xcb_Clipboard_selectionCovert(struct ui_xcb_Clipboard * const clipboard);
+void ui_xcb_Clipboard_selectionCovert(struct ui_xcb_Clipboard * const restrict clipboard);
 
 #endif // UI_XCB_CLIPBOARD_H
 

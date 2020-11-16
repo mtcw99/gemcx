@@ -46,6 +46,9 @@ void ui_xcb_TextInput_deinit(struct ui_xcb_TextInput * const textinput);
 void ui_xcb_TextInput_render(struct ui_xcb_TextInput * const textinput);
 void ui_xcb_TextInput_modify(struct ui_xcb_TextInput * const textinput,
 		const struct ui_xcb_Key * const xkey);
+void ui_xcb_TextInput_append(struct ui_xcb_TextInput * const textinput,
+		const char *str,
+		const uint32_t strLength);
 
 #endif // UI_XCB_TEXTINPUT_H
 

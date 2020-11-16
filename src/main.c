@@ -212,6 +212,25 @@ main(int argc, char **argv)
 		{
 			ui_xcb_Clipboard_selectionNotify(&clipboard,
 					(xcb_selection_notify_event_t *) event.generic_event);
+			if (clipboard.contentLength > 0)
+			{
+				if (urlInput.active)
+				{
+					// Remove newline
+					for (uint32_t i = 0; i < clipboard.contentLength; ++i)
+					{
+						if (clipboard.content[i] == '\n' ||
+								clipboard.content[i] == '\r')
+						{
+							clipboard.content[i] = ' ';
+						}
+					}
+					ui_xcb_TextInput_append(&urlInput,
+							clipboard.content,
+							clipboard.contentLength);
+					//printf("content: %s\n", clipboard.content);
+				}
+			}
 		}	break;
 		case XCB_MAP_NOTIFY:
 		{
@@ -364,9 +383,12 @@ main(int argc, char **argv)
 			ui_xcb_Key_set(&xkey, prEv->detail, prEv->state);
 			//printf("key: %s\n", xkey.buffer);
 
-			if (xkey.keysymNoMask == XKB_KEY_F1)
+			// PASTE: Ctrl-V
+			if ((xkey.keysymNoMask == XKB_KEY_v) &&
+					(xkey.mask & XCB_KEY_BUT_MASK_CONTROL))
 			{
 				ui_xcb_Clipboard_selectionCovert(&clipboard);
+				break;
 			}
 
 			ui_xcb_TextInput_modify(&urlInput, &xkey);

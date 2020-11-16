@@ -30,7 +30,7 @@ static const struct ui_xcb_Clipboard_ia_infos
 };
 
 void
-ui_xcb_Clipboard_init(struct ui_xcb_Clipboard * const clipboard,
+ui_xcb_Clipboard_init(struct ui_xcb_Clipboard * const restrict clipboard,
 		struct ui_xcb_Context * const context)
 {
 	xcb_intern_atom_cookie_t cookies[UI_XCB_CLIPBOARD_IA__TOTAL] = { 0 };
@@ -73,11 +73,11 @@ ui_xcb_Clipboard_init(struct ui_xcb_Clipboard * const clipboard,
 
 	clipboard->context = context;
 
-	ui_xcb_Clipboard_selectionCovert(clipboard);
+	//ui_xcb_Clipboard_selectionCovert(clipboard);
 }
 
 void
-ui_xcb_Clipboard_deinit(struct ui_xcb_Clipboard * const clipboard)
+ui_xcb_Clipboard_deinit(struct ui_xcb_Clipboard * const restrict clipboard)
 {
 	xcb_destroy_window(clipboard->context->connection,
 			clipboard->selectionWindow);
@@ -99,7 +99,7 @@ ui_xcb_Clipboard_deinit(struct ui_xcb_Clipboard * const clipboard)
 }
 
 void
-ui_xcb_Clipboard_selectionNotify(struct ui_xcb_Clipboard * const clipboard,
+ui_xcb_Clipboard_selectionNotify(struct ui_xcb_Clipboard * const restrict clipboard,
 		const xcb_selection_notify_event_t * const selNotifyEv)
 {
 	if (selNotifyEv->selection == clipboard->replies[UI_XCB_CLIPBOARD_IA_CLIPBOARD]->atom &&
@@ -129,7 +129,7 @@ ui_xcb_Clipboard_selectionNotify(struct ui_xcb_Clipboard * const clipboard,
 }
 
 void
-ui_xcb_Clipboard_selectionCovert(struct ui_xcb_Clipboard * const clipboard)
+ui_xcb_Clipboard_selectionCovert(struct ui_xcb_Clipboard * const restrict clipboard)
 {
 	clipboard->timestamp = time(NULL);
 
