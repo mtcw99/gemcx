@@ -80,9 +80,6 @@ main(int argc, char **argv)
 	struct ui_xcb_Context context = { 0 };
 	ui_xcb_Context_init(&context);
 
-	// TODO: Get full width/height
-	ui_xcb_Monitors_getTotalWH(&context.monitors, NULL, NULL);
-
 	struct ui_xcb_Window window = { 0 };
 	ui_xcb_Window_init(&window, &context, "gemcx");
 	ui_xcb_Window_minSize(&window, 400, 200);
@@ -148,10 +145,12 @@ main(int argc, char **argv)
 	ui_xcb_Button_show(&controlBarMenuButton, true);
 
 	struct ui_xcb_Pixmap doubleBuffer = { 0 };
-	ui_xcb_Pixmap_init(&doubleBuffer, &context, contentSubWindow.id, 1920, 1080, 0x000000);
+	ui_xcb_Pixmap_init(&doubleBuffer, &context, contentSubWindow.id,
+			1920, 1080, 0x000000);
 
 	struct ui_xcb_Pixmap mainArea = { 0 };
-	ui_xcb_Pixmap_init(&mainArea, &context, doubleBuffer.pixmap, 1920, 10080, 0x222222);
+	ui_xcb_Pixmap_init(&mainArea, &context, doubleBuffer.pixmap,
+			1920, 10080, 0x222222);
 	int32_t mainAreaYoffset = 0;
 	uint32_t mainAreaYMax = 0;
 

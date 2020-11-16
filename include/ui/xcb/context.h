@@ -21,6 +21,9 @@ struct ui_xcb_Context
 	xcb_intern_atom_reply_t *exit_reply;
 	xcb_visualtype_t *	visual_type;
 
+	uint32_t		rootWidth;
+	uint32_t		rootHeight;
+
 	struct ui_xcb_Key	key;
 	struct ui_xcb_Monitors	monitors;
 
@@ -34,8 +37,6 @@ struct ui_xcb_Context
 
 void ui_xcb_Context_init(struct ui_xcb_Context *context);
 void ui_xcb_Context_deinit(struct ui_xcb_Context *context);
-
-void ui_xcb_Context_getRootWH(struct ui_xcb_Context *context);
 
 #endif // UI_XCB_CONTEXT_H
 

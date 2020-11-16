@@ -26,8 +26,5 @@ void ui_xcb_Monitors_deinit(struct ui_xcb_Monitors *monitors);
 void ui_xcb_Monitors_add(struct ui_xcb_Monitors *monitors,
 		const xcb_randr_get_crtc_info_reply_t *reply);
 
-void ui_xcb_Monitors_getTotalWH(struct ui_xcb_Monitors *monitors,
-		uint32_t *width, uint32_t *height);
-
 #endif // UI_XCB_MONITORS_H
 

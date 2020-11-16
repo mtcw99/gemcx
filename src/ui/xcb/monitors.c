@@ -59,18 +59,3 @@ ui_xcb_Monitors_add(struct ui_xcb_Monitors *monitors,
 	monitor->height = reply->height;
 }
 
-void
-ui_xcb_Monitors_getTotalWH(struct ui_xcb_Monitors *monitors,
-		uint32_t *width, uint32_t *height)
-{
-	(void) width;
-	(void) height;
-	// TODO: Get width by: qsort monitors by x then iterate add
-	// 	 Get height by: qsort monitors by y the iterate add
-	for (uint32_t i = 0; i < monitors->length; ++i)
-	{
-		const struct ui_xcb_Monitor *monitor = &monitors->monitors[i];
-		printf("%d %d %d %d\n", monitor->x, monitor->y, monitor->width, monitor->height);
-	}
-}
-

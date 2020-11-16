@@ -2,7 +2,32 @@
 
 #include <stdlib.h>
 
-void
+static void
+ui_xcb_Context__getRootWH(struct ui_xcb_Context *context)
+{
+	xcb_get_geometry_cookie_t geomCookie = xcb_get_geometry(
+			context->connection,
+			context->screen->root);
+
+	xcb_get_geometry_reply_t *geomReply = xcb_get_geometry_reply(
+			context->connection,
+			geomCookie,
+			NULL);
+
+	if (geomReply == NULL)
+	{
+		fprintf(stderr, "Cannot get geometry of root screen\n");
+		return;
+	}
+
+	context->rootWidth = geomReply->width;
+	context->rootHeight = geomReply->height;
+
+	free(geomReply);
+	geomReply = NULL;
+}
+
+static void
 ui_xcb_Context__randr(struct ui_xcb_Context *context)
 {
 	// Request for screen resource to X server
@@ -138,6 +163,7 @@ ui_xcb_Context_init(struct ui_xcb_Context *context)
 visual_found:
 
 	context->event = NULL;
+	ui_xcb_Context__getRootWH(context);
 
 	return;
 
@@ -169,10 +195,4 @@ ui_xcb_Context_deinit(struct ui_xcb_Context *context)
 	}
 }
 
-void
-ui_xcb_Context_getRootWH(struct ui_xcb_Context *context)
-{
-	// context->screen->root
-	// get window info???
-}
 

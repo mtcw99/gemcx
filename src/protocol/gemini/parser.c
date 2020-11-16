@@ -135,6 +135,13 @@ p_gemini_Parser__line(struct p_gemini_Parser_Line *lineContent,
 			strncpy(lineContent->content.link.text,
 					lineLink + linkSplit,
 					lineLinkSize - linkSplit - 1);
+
+			// If its empty, then use link as the text
+			if (lineContent->content.link.text[0] == '\0')
+			{
+				strcpy(lineContent->content.link.text,
+						lineContent->content.link.link);
+			}
 		}
 		break;
 	case '#':	// Headers

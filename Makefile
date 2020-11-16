@@ -35,12 +35,12 @@ endef
 SRC := $(strip ${SRC})
 
 CC = cc
-CFLAGS = -std=c99 -pedantic -Wall
+CFLAGS = -std=c99 -pedantic -Wall -D_POSIX_C_SOURCE=200809L 
 CFLAGS_DEBUG = -O0 -g -DDEBUG
 CFLAGS_RELEASE = -Os -flto
 INCLUDEDIR = include/
-LIBS = -D_POSIX_C_SOURCE=200809L -lssl -lcrypto -lxcb -lxcb-cursor -lxcb-icccm -lxcb-randr -lxkbcommon -lxkbcommon-x11
-PKG = pangocairo fontconfig
+LIBS = -lssl -lcrypto -lxcb -lxcb-cursor -lxcb-icccm -lxcb-randr
+PKG = pangocairo fontconfig xkbcommon xkbcommon-x11
 PKGCFG = `pkg-config --libs --cflags ${PKG}`
 VERSION = 0.1
 PREFIX = /usr/local
