@@ -91,7 +91,7 @@ ui_xcb_Text_GDEINIT(void)
 	FcFini();
 }
 
-void
+struct ui_xcb_Text_WH
 ui_xcb_Text_render(struct ui_xcb_Text *text,
 		const xcb_drawable_t drawable,
 		const char *str,
@@ -100,11 +100,11 @@ ui_xcb_Text_render(struct ui_xcb_Text *text,
 		const uint32_t color,
 		const double alpha)
 {
-	ui_xcb_Text_renderWrapped(text, drawable, str, x, y, color, alpha,
-			false, -1, 0, true);
+	return ui_xcb_Text_renderWrapped(text, drawable, str, x, y, color,
+			alpha, false, -1, 0, true);
 }
 
-int32_t
+struct ui_xcb_Text_WH
 ui_xcb_Text_renderWrapped(struct ui_xcb_Text *text,
 		const xcb_drawable_t drawable,
 		const char *str,
@@ -117,7 +117,10 @@ ui_xcb_Text_renderWrapped(struct ui_xcb_Text *text,
 		const uint32_t spacing,
 		const bool render)
 {
-	int32_t height = spacing;
+	struct ui_xcb_Text_WH textWH = {
+		.width = 0,
+		.height = spacing
+	};
 
 	if (render)
 	{
@@ -134,7 +137,7 @@ ui_xcb_Text_renderWrapped(struct ui_xcb_Text *text,
 		{
 			fprintf(stderr, "ERROR: Cannot get gemetry of drawable %d.\n",
 					drawable);
-			return spacing;
+			return textWH;
 		}
 
 		cairo_surface_flush(text->cr_surface);
@@ -169,17 +172,17 @@ ui_xcb_Text_renderWrapped(struct ui_xcb_Text *text,
 		cairo_move_to(text->cr, x, y);
 	}
 	pango_cairo_update_layout(text->cr, text->pa_layout);
-	pango_layout_get_pixel_size(text->pa_layout, NULL, &height);
+	pango_layout_get_pixel_size(text->pa_layout, &textWH.width, &textWH.height);
 	if (render)
 	{
 		pango_cairo_show_layout(text->cr, text->pa_layout);
 		cairo_surface_flush(text->cr_surface);
 	}
 
-	return height;
+	return textWH;
 }
 
-inline int32_t
+inline struct ui_xcb_Text_WH
 ui_xcb_Text_fakeRenderWrapped(struct ui_xcb_Text *text,
 		const char *str,
 		const double y,

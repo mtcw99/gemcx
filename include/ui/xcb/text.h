@@ -13,6 +13,12 @@
 
 extern const char *UI_XCB_TEXT_DEFAULT_FT_FONT;
 
+struct ui_xcb_Text_WH
+{
+	int32_t width;
+	int32_t height;
+};
+
 struct ui_xcb_Text
 {
 	cairo_surface_t	*cr_surface;
@@ -39,7 +45,7 @@ void ui_xcb_Text_init(struct ui_xcb_Text *text, struct ui_xcb_Context *context,
 void ui_xcb_Text_deinit(struct ui_xcb_Text *text);
 void ui_xcb_Text_GDEINIT(void);
 
-void ui_xcb_Text_render(struct ui_xcb_Text *text,
+struct ui_xcb_Text_WH ui_xcb_Text_render(struct ui_xcb_Text *text,
 		const xcb_drawable_t drawable,
 		const char *str,
 		const double x,
@@ -47,7 +53,7 @@ void ui_xcb_Text_render(struct ui_xcb_Text *text,
 		const uint32_t color,
 		const double alpha);
 
-int32_t ui_xcb_Text_renderWrapped(struct ui_xcb_Text *text,
+struct ui_xcb_Text_WH ui_xcb_Text_renderWrapped(struct ui_xcb_Text *text,
 		const xcb_drawable_t drawable,
 		const char *str,
 		const double x,
@@ -59,7 +65,7 @@ int32_t ui_xcb_Text_renderWrapped(struct ui_xcb_Text *text,
 		const uint32_t spacing,
 		const bool render);
 
-int32_t ui_xcb_Text_fakeRenderWrapped(struct ui_xcb_Text *text,
+struct ui_xcb_Text_WH ui_xcb_Text_fakeRenderWrapped(struct ui_xcb_Text *text,
 		const char *str,
 		const double y,
 		const uint32_t maxWidth,

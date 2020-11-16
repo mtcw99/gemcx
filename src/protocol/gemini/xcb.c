@@ -83,7 +83,7 @@ p_gemini_Xcb_render(struct protocol_Xcb *pgxcb,
 						pgxcb->subwindow->rect.width -
 							pgxcb->paddingLeft -
 							pgxcb->paddingRight,
-						yChange);
+						yChange).height;
 			}
 			else
 			{
@@ -99,7 +99,7 @@ p_gemini_Xcb_render(struct protocol_Xcb *pgxcb,
 							pgxcb->paddingLeft -
 							pgxcb->paddingRight,
 						yChange,
-						true);
+						true).height;
 			}
 
 			pY += addY - yChange;

@@ -18,6 +18,7 @@
 #include "ui/xcb/button.h"
 #include "ui/xcb/cursor.h"
 #include "ui/xcb/subwindow.h"
+#include "ui/xcb/textInput.h"
 
 int
 main(int argc, char **argv)
@@ -120,6 +121,8 @@ main(int argc, char **argv)
 			XCB_EVENT_MASK_BUTTON_RELEASE);
 	ui_xcb_Subwindow_show(&contentSubWindow, true);
 
+	// Control top bar
+
 	struct ui_xcb_Subwindow controlBarSubWindow = { 0 };
 	ui_xcb_Subwindow_init(&controlBarSubWindow, &context, window.id,
 			0x111111, 0xEEEEEE, 0,
@@ -144,13 +147,29 @@ main(int argc, char **argv)
 			2, 2);
 	ui_xcb_Button_show(&controlBarMenuButton, true);
 
+	char urlStr[256] = { 0 };
+	struct ui_xcb_TextInput urlInput = { 0 };
+	ui_xcb_TextInput_init(&urlInput, &context, &text[4],
+			controlBarSubWindow.id,
+			(const xcb_rectangle_t) {
+				.x = 50,
+				.y = 0,
+				.width = 400,
+				.height = contentSubWindowYDiff
+			},
+			0x000000, 0xDDDDDD,
+			2, 2,
+			urlStr, sizeof(urlStr));
+
+	// Control top bar ends
+
 	struct ui_xcb_Pixmap doubleBuffer = { 0 };
 	ui_xcb_Pixmap_init(&doubleBuffer, &context, contentSubWindow.id,
-			1920, 1080, 0x000000);
+			context.rootWidth, context.rootHeight, 0x000000);
 
 	struct ui_xcb_Pixmap mainArea = { 0 };
 	ui_xcb_Pixmap_init(&mainArea, &context, doubleBuffer.pixmap,
-			1920, 10080, 0x222222);
+			context.rootWidth, 10080, 0x222222);
 	int32_t mainAreaYoffset = 0;
 	uint32_t mainAreaYMax = 0;
 
@@ -160,7 +179,7 @@ main(int argc, char **argv)
 	struct protocol_Xcb pxcb = { 0 };
 	protocol_Xcb_init(&pxcb, &context,
 			text, mainArea.pixmap, &contentSubWindow,
-			1920, 10080, 0x222222, pType);
+			context.rootWidth, 10080, 0x222222, pType);
 
 	protocol_Xcb_itemsInit(&pxcb, &parser);
 	protocol_Xcb_padding(&pxcb, 10, 10);
@@ -255,6 +274,7 @@ main(int argc, char **argv)
 			(void) expose;
 			ui_xcb_Pixmap_render(&doubleBuffer, 0, 0);
 			ui_xcb_Button_render(&controlBarMenuButton);
+			ui_xcb_TextInput_render(&urlInput);
 		}	break;
 		case XCB_BUTTON_PRESS:
 		{
@@ -262,18 +282,19 @@ main(int argc, char **argv)
 			xcb_button_press_event_t *bp =
 				(xcb_button_press_event_t *) event.generic_event;
 
-			if (ui_xcb_Button_pressed(&controlBarMenuButton, bp->event))
-			{
-				if (bp->detail == 1)
-				{
-					// TODO: xcb menu
-					printf("Menu pressed\n");
-				}
-			}
-
 			switch (bp->detail)
 			{
 			case 1:	// Left-mouse click
+				urlInput.active = (urlInput.subwindow.id == bp->event);
+
+				if (ui_xcb_Button_pressed(&controlBarMenuButton, bp->event))
+				{
+					// TODO: xcb menu
+					printf("Menu pressed\n");
+					printf("URL String: %s\n", urlStr);
+					break;
+				}
+
 				for (uint32_t i = 0; i < pxcb.links.length; ++i)
 				{
 					if (protocol_Links_clicked(&pxcb.links, i, bp->event))
@@ -332,6 +353,8 @@ main(int argc, char **argv)
 
 			ui_xcb_Key_set(&xkey, prEv->detail, prEv->state);
 			//printf("key: %s\n", xkey.buffer);
+
+			ui_xcb_TextInput_modify(&urlInput, &xkey);
 
 			switch (xkey.keysymNoMask)
 			{
@@ -395,6 +418,7 @@ main(int argc, char **argv)
 
 	protocol_Xcb_deinit(&pxcb);
 	ui_xcb_Button_deinit(&controlBarMenuButton);
+	ui_xcb_TextInput_deinit(&urlInput);
 
 	// xcb deinit
 	ui_xcb_Key_deinit(&xkey);
