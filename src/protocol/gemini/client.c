@@ -59,20 +59,6 @@ p_gemini_Client__cleanupRetErr(struct p_gemini_TLS *tls,
 	return error;
 }
 
-void
-p_gemini_Client_init(struct p_gemini_Client *client, const char *uri)
-{
-	util_socket_Host_init(&client->host, uri);
-	strcpy(client->url, uri);
-	client->localTmpPath[0] = '\0';
-}
-
-void
-p_gemini_Client_deinit(struct p_gemini_Client *client)
-{
-	(void) client;
-}
-
 int32_t
 p_gemini_Client__verifyCallback(int32_t preverify, X509_STORE_CTX *x509_ctx)
 {
@@ -93,7 +79,7 @@ p_gemini_Client__verifyCallback(int32_t preverify, X509_STORE_CTX *x509_ctx)
 }
 
 enum p_gemini_Client_ConnectError
-p_gemini_Client_request(struct p_gemini_Client *client,
+p_gemini_Client_request(struct protocol_Client *client,
 		FILE *fp)
 {
 	struct p_gemini_TLS tls = {
@@ -268,7 +254,7 @@ p_gemini_Client_request(struct p_gemini_Client *client,
 }
 
 void
-p_gemini_Client_printInfo(const struct p_gemini_Client *client)
+p_gemini_Client_printInfo(const struct protocol_Client *client)
 {
 	util_socket_Host_printInfo(&client->host);
 }

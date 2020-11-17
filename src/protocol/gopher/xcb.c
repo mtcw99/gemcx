@@ -24,7 +24,7 @@ p_gopher_Xcb_render(struct protocol_Xcb *pgxcb,
 		case 'i':	// Informational Text
 			if (!scroll)
 			{
-				ui_xcb_Text_render(pgxcb->font,
+				ui_xcb_Text_render(&pgxcb->font[4],
 						pgxcb->pixmap.pixmap, line->info,
 						pX, pY, 0xFFFFFF, 1.0);
 			}
@@ -54,7 +54,7 @@ p_gopher_Xcb_render(struct protocol_Xcb *pgxcb,
 #endif
 			if (!scroll)
 			{
-				ui_xcb_Text_render(pgxcb->font,
+				ui_xcb_Text_render(&pgxcb->font[4],
 						pgxcb->pixmap.pixmap, "►",
 						pX, pY, 0xFFFFFF, 1.0);
 			}

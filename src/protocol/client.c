@@ -1,47 +1,47 @@
 #include "protocol/client.h"
 
-void
-protocol_Client_GINIT(void)
-{
-	p_gemini_Client_GINIT();
-}
+#include "protocol/gemini/client.h"
+#include "protocol/gopher/client.h"
 
-inline void
-protocol_Client_init(struct protocol_Client *client,
-		const enum protocol_Type type)
-{
-	client->type = type;
-}
+#include <string.h>
 
-void
-protocol_Client_newUrl(struct protocol_Client *client, const char *url)
+static bool ginitUsed = false;
+
+static void
+protocol_Client__GINIT(void)
 {
-	switch (client->type)
+	if (!ginitUsed)
 	{
-	case PROTOCOL_TYPE_GEMINI:
-		p_gemini_Client_init(&client->protocol.gemini, url);
-		break;
-	case PROTOCOL_TYPE_GOPHER:
-		p_gopher_Client_init(&client->protocol.gopher, url);
-		break;
-	default:
-		protocol_Type_assert(client->type);
+		p_gemini_Client_GINIT();
+		ginitUsed = true;
 	}
 }
 
 void
-protocol_Client_deinit(struct protocol_Client *client)
+protocol_Client_newUrl(struct protocol_Client *client,
+		const char *url)
 {
-	switch (client->type)
+	protocol_Client__GINIT();
+
+	util_socket_Host_init(&client->host, url);
+	strcpy(client->url, url);
+	client->localTmpPath[0] = '\0';
+
+	// Change type based on host scheme
+	if (!strcmp(client->host.scheme, "gemini"))
 	{
-	case PROTOCOL_TYPE_GEMINI:
-		p_gemini_Client_deinit(&client->protocol.gemini);
-		break;
-	case PROTOCOL_TYPE_GOPHER:
-		p_gopher_Client_deinit(&client->protocol.gopher);
-		break;
-	default:
-		protocol_Type_assert(client->type);
+		client->type = PROTOCOL_TYPE_GEMINI;
+		printf("protocol/Client/newUrl: Type: Gemini\n");
+	}
+	else if (!strcmp(client->host.scheme, "gopher"))
+	{
+		client->type = PROTOCOL_TYPE_GOPHER;
+		printf("protocol/Client/newUrl: Type: Gopher\n");
+	}
+	else
+	{
+		fprintf(stderr, "ERROR: Unsupported scheme '%s'!\n",
+				client->host.scheme);
 	}
 }
 
@@ -52,9 +52,9 @@ protocol_Client_request(struct protocol_Client *client,
 	switch (client->type)
 	{
 	case PROTOCOL_TYPE_GEMINI:
-		return p_gemini_Client_request(&client->protocol.gemini, fp);
+		return p_gemini_Client_request(client, fp);
 	case PROTOCOL_TYPE_GOPHER:
-		return p_gopher_Client_request(&client->protocol.gopher, fp);
+		return p_gopher_Client_request(client, fp);
 	default:
 		protocol_Type_assert(client->type);
 	}
@@ -67,10 +67,10 @@ protocol_Client_printInfo(const struct protocol_Client *client)
 	switch (client->type)
 	{
 	case PROTOCOL_TYPE_GEMINI:
-		p_gemini_Client_printInfo(&client->protocol.gemini);
+		p_gemini_Client_printInfo(client);
 		break;
 	case PROTOCOL_TYPE_GOPHER:
-		p_gopher_Client_printInfo(&client->protocol.gopher);
+		p_gopher_Client_printInfo(client);
 		break;
 	default:
 		protocol_Type_assert(client->type);

@@ -16,19 +16,8 @@ static const char *gopherClientErrorStr[P_GOPHER_CLIENT_CONNECTERROR__TOTAL] = {
 	[P_GOPHER_CLIENT_CONNECTERROR_NORECV] = "No response received"
 };
 
-void
-p_gopher_Client_init(struct p_gopher_Client *client, const char *url)
-{
-	util_socket_Host_init(&client->host, url);
-}
-
-void
-p_gopher_Client_deinit(struct p_gopher_Client *client)
-{
-}
-
 enum p_gopher_Client_ConnectError
-p_gopher_Client_request(struct p_gopher_Client *client,
+p_gopher_Client_request(struct protocol_Client *client,
 		FILE *fp)
 {
 	int32_t sockfd;
@@ -76,7 +65,7 @@ p_gopher_Client_request(struct p_gopher_Client *client,
 }
 
 void
-p_gopher_Client_printInfo(const struct p_gopher_Client *client)
+p_gopher_Client_printInfo(const struct protocol_Client *client)
 {
 	util_socket_Host_printInfo(&client->host);
 }

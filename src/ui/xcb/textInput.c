@@ -3,6 +3,20 @@
 #include <string.h>
 #include "util/memory.h"
 
+static void
+ui_xcb_TextInput__renderTextToPixmap(struct ui_xcb_TextInput * const textinput)
+{
+	ui_xcb_Pixmap_clear(&textinput->pixmap);
+	textinput->renderWidth = ui_xcb_Text_render(textinput->font,
+			textinput->pixmap.pixmap,
+			textinput->str,
+			textinput->textX,
+			textinput->textY,
+			textinput->textColor,
+			1.0).width;
+	ui_xcb_TextInput_render(textinput);
+}
+
 void
 ui_xcb_TextInput_init(struct ui_xcb_TextInput * const textinput,
 		struct ui_xcb_Context * const context,
@@ -43,6 +57,9 @@ ui_xcb_TextInput_init(struct ui_xcb_TextInput * const textinput,
 
 	textinput->font = font;
 	textinput->context = context;
+
+	ui_xcb_TextInput__renderTextToPixmap(textinput);
+	ui_xcb_TextInput_render(textinput);
 }
 
 void
@@ -69,20 +86,6 @@ ui_xcb_TextInput_render(struct ui_xcb_TextInput * const textinput)
 				textinput->subwindow.rect.width - textinput->renderWidth :
 				0,
 			0);
-}
-
-static void
-ui_xcb_TextInput__renderTextToPixmap(struct ui_xcb_TextInput * const textinput)
-{
-	ui_xcb_Pixmap_clear(&textinput->pixmap);
-	textinput->renderWidth = ui_xcb_Text_render(textinput->font,
-			textinput->pixmap.pixmap,
-			textinput->str,
-			textinput->textX,
-			textinput->textY,
-			textinput->textColor,
-			1.0).width;
-	ui_xcb_TextInput_render(textinput);
 }
 
 void

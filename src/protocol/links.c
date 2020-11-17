@@ -90,10 +90,12 @@ protocol_Links_new(struct protocol_Links *links,
 			links->context,
 			parentWindow,
 			links->backgroundColor,
-			0xFFFFFF,	// Text color
+			0x0088CC,	// Text color
 			0x000000, 0,
 			(const xcb_rectangle_t) { 0, 0, calcStrWidth, 20 },
-			0, 0);
+			0, 0,
+			links->backgroundColor,
+			0x00FFFF);	// Text hover color
 	ui_xcb_Button_show(&link->button, false);
 
 	return index;
@@ -126,5 +128,33 @@ protocol_Links_render(struct protocol_Links *links,
 	{
 		ui_xcb_Button_show(&link->button, false);
 	}
+}
+
+bool
+protocol_Links_hoverEnter(struct protocol_Links *links,
+		const xcb_enter_notify_event_t *const restrict enterEv)
+{
+	for (uint32_t i = 0; i < links->length; ++i)
+	{
+		if (ui_xcb_Button_hoverEnter(&links->links[i].button, enterEv))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool
+protocol_Links_hoverLeave(struct protocol_Links *links,
+		const xcb_leave_notify_event_t *const restrict leaveEv)
+{
+	for (uint32_t i = 0; i < links->length; ++i)
+	{
+		if (ui_xcb_Button_hoverLeave(&links->links[i].button, leaveEv))
+		{
+			return true;
+		}
+	}
+	return false;
 }
 

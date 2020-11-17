@@ -24,6 +24,8 @@ struct ui_xcb_Menu
 		uint32_t textY;
 		xcb_rectangle_t subWindowRect;
 		uint32_t buttonHeight;
+		uint32_t hoverBackgroundColor;
+		uint32_t hoverTextColor;
 	} style;
 
 	uint32_t buttonY;
@@ -55,6 +57,12 @@ void ui_xcb_Menu_render(struct ui_xcb_Menu *const restrict menu);
 // 0 to menu->buttonsLength-1 - Pressed at one of the buttons
 int32_t ui_xcb_Menu_pressed(struct ui_xcb_Menu *const restrict menu,
 		const xcb_button_press_event_t *const restrict bpEv);
+
+bool ui_xcb_Menu_hoverEnter(struct ui_xcb_Menu *const restrict menu,
+		const xcb_enter_notify_event_t *const restrict enterEv);
+
+bool ui_xcb_Menu_hoverLeave(struct ui_xcb_Menu *const restrict menu,
+		const xcb_leave_notify_event_t *const restrict leaveEv);
 
 #endif // UI_XCB_MENU_H
 

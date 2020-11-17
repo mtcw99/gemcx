@@ -9,13 +9,7 @@
 #include <openssl/ssl.h>
 
 #include "util/socket.h"
-
-struct p_gemini_Client
-{
-	struct util_socket_Host host;
-	char localTmpPath[256];
-	char url[1024];
-};
+#include "protocol/client.h"
 
 struct p_gemini_TLS
 {
@@ -51,11 +45,9 @@ enum p_gemini_Client_ConnectError
 
 void p_gemini_Client_GINIT(void);
 
-void p_gemini_Client_init(struct p_gemini_Client *client, const char *uri);
-void p_gemini_Client_deinit(struct p_gemini_Client *client);
-enum p_gemini_Client_ConnectError p_gemini_Client_request(struct p_gemini_Client *client,
+enum p_gemini_Client_ConnectError p_gemini_Client_request(struct protocol_Client *client,
 		FILE *fp);
-void p_gemini_Client_printInfo(const struct p_gemini_Client *client);
+void p_gemini_Client_printInfo(const struct protocol_Client *client);
 const char *p_gemini_Client_getErrorStr(const enum p_gemini_Client_ConnectError error);
 
 #endif // PROTOCOL_GEMINI_CLIENT_H

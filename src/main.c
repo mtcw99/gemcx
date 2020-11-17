@@ -38,6 +38,15 @@ static const struct
 	[GEMCX_MENU_EXIT] = {"Exit"},
 };
 
+static void
+gemcx_xcb_connectUrl(struct protocol_Client *const restrict client,
+		struct protocol_Parser *const restrict parser,
+		const char *const restrict url)
+{
+	protocol_Client_newUrl(client, url);
+	protocol_Parser_init(parser, client->type);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -48,17 +57,13 @@ main(int argc, char **argv)
 	util_memory_enableDebug();
 	printf("NOTICE: RUNNING DEBUG BUILD\n");
 #endif
-	protocol_Client_GINIT();
-
 	struct protocol_Client client = { 0 };
 	struct protocol_Parser parser = { 0 };
 
-#if 0
-	const enum protocol_Type pType = PROTOCOL_TYPE_GOPHER;
+#if 1
 	const char *url = "gopher://gopher.quux.org/1/";
 	const char *fileName = "example/out.gopher";
 #else
-	const enum protocol_Type pType = PROTOCOL_TYPE_GEMINI;
 	const char *url = "gemini://gemini.circumlunar.space/";
 	const char *fileName = "example/test.gmi";
 	//const char *fileName = "example/out.gmi";
@@ -67,9 +72,7 @@ main(int argc, char **argv)
 	(void) fileName;
 	FILE *reqFp = tmpfile();
 
-	protocol_Client_init(&client, pType);
-	protocol_Parser_init(&parser, pType);
-
+	gemcx_xcb_connectUrl(&client, &parser, url);
 #if 0
 	protocol_Client_newUrl(&client, url);
 	protocol_Client_printInfo(&client);
@@ -160,9 +163,10 @@ main(int argc, char **argv)
 	struct ui_xcb_Button controlBarMenuButton = { 0 };
 	ui_xcb_Button_init(&controlBarMenuButton, "gemcx", &text[0],
 			&context, controlBarSubWindow.id,
-			0x444444, 0xFFFFFF, 0x000000, 0,
+			0x444444, 0xEEEEEE, 0x000000, 0,
 			(const xcb_rectangle_t) { 0, 0, 70, contentSubWindowYDiff },
-			10, 2);
+			10, 2,
+			0x222222, 0xFFFFFF);
 	ui_xcb_Button_show(&controlBarMenuButton, true);
 
 	struct ui_xcb_Menu controlBarMenu = { 0 };
@@ -179,7 +183,9 @@ main(int argc, char **argv)
 					.width = 150,
 					.height = 400,
 				},
-				.buttonHeight = contentSubWindowYDiff
+				.buttonHeight = contentSubWindowYDiff,
+				.hoverBackgroundColor = 0x333333,
+				.hoverTextColor = 0xFFFFFF
 			});
 
 	for (uint32_t i = 0; i < GEMCX_MENU__TOTAL; ++i)
@@ -188,6 +194,7 @@ main(int argc, char **argv)
 	}
 
 	char urlStr[256] = { 0 };
+	strcpy(urlStr, url);	// TEMP?
 	struct ui_xcb_TextInput urlInput = { 0 };
 	ui_xcb_TextInput_init(&urlInput, &context, &text[4],
 			controlBarSubWindow.id,
@@ -218,7 +225,7 @@ main(int argc, char **argv)
 	struct protocol_Xcb pxcb = { 0 };
 	protocol_Xcb_init(&pxcb, &context,
 			text, mainArea.pixmap, &contentSubWindow,
-			context.rootWidth, 10080, 0x222222, pType);
+			context.rootWidth, 10080, 0x222222);
 
 	protocol_Xcb_itemsInit(&pxcb, &parser);
 	protocol_Xcb_padding(&pxcb, 10, 10);
@@ -354,6 +361,34 @@ main(int argc, char **argv)
 			ui_xcb_Button_render(&controlBarMenuButton);
 			ui_xcb_TextInput_render(&urlInput);
 			ui_xcb_Menu_render(&controlBarMenu);
+		}	break;
+		case XCB_ENTER_NOTIFY:
+		{
+			xcb_enter_notify_event_t *enterEv =
+				(xcb_enter_notify_event_t *) event.generic_event;
+			if (ui_xcb_Button_hoverEnter(&controlBarMenuButton, enterEv))
+			{
+			}
+			else if (ui_xcb_Menu_hoverEnter(&controlBarMenu, enterEv))
+			{
+			}
+			else if (protocol_Xcb_hoverEnter(&pxcb, enterEv))
+			{
+			}
+		}	break;
+		case XCB_LEAVE_NOTIFY:
+		{
+			xcb_leave_notify_event_t *leaveEv =
+				(xcb_leave_notify_event_t *) event.generic_event;
+			if (ui_xcb_Button_hoverLeave(&controlBarMenuButton, leaveEv))
+			{
+			}
+			else if (ui_xcb_Menu_hoverLeave(&controlBarMenu, leaveEv))
+			{
+			}
+			else if (protocol_Xcb_hoverLeave(&pxcb, leaveEv))
+			{
+			}
 		}	break;
 		case XCB_BUTTON_PRESS:
 		{
@@ -562,7 +597,6 @@ main(int argc, char **argv)
 	ui_xcb_Text_GDEINIT();
 
 	// protocols deinit
-	protocol_Client_deinit(&client);
 	protocol_Parser_deinit(&parser);
 
 	util_memory_freeAll();

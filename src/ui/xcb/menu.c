@@ -90,7 +90,9 @@ ui_xcb_Menu_add(struct ui_xcb_Menu *const restrict menu,
 				.height = menu->style.buttonHeight
 			},
 			menu->style.textX,
-			menu->style.textY);
+			menu->style.textY,
+			menu->style.hoverBackgroundColor,
+			menu->style.hoverTextColor);
 
 	menu->buttonY += menu->style.buttonHeight;
 
@@ -141,5 +143,45 @@ ui_xcb_Menu_pressed(struct ui_xcb_Menu *const restrict menu,
 	}
 
 	return -1;
+}
+
+bool
+ui_xcb_Menu_hoverEnter(struct ui_xcb_Menu *const restrict menu,
+		const xcb_enter_notify_event_t *const restrict enterEv)
+{
+	if (enterEv->event == menu->subwindow.id)
+	{
+		return true;
+	}
+
+	for (uint32_t i = 0; i < menu->buttonsLength; ++i)
+	{
+		if (ui_xcb_Button_hoverEnter(&menu->buttons[i], enterEv))
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool
+ui_xcb_Menu_hoverLeave(struct ui_xcb_Menu *const restrict menu,
+		const xcb_leave_notify_event_t *const restrict leaveEv)
+{
+	if (leaveEv->event == menu->subwindow.id)
+	{
+		return true;
+	}
+
+	for (uint32_t i = 0; i < menu->buttonsLength; ++i)
+	{
+		if (ui_xcb_Button_hoverLeave(&menu->buttons[i], leaveEv))
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
 

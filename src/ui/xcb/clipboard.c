@@ -168,8 +168,6 @@ ui_xcb_Clipboard_selectionRequest(struct ui_xcb_Clipboard * const restrict clipb
 		return;
 	}
 
-	xcb_selection_notify_event_t selNotifyEv = { 0 };
-
 	//printf("ui_xcb_Clipboard_selectionRequest\n");
 	xcb_change_property(clipboard->context->connection,
 			XCB_PROP_MODE_REPLACE,
@@ -185,6 +183,7 @@ ui_xcb_Clipboard_selectionRequest(struct ui_xcb_Clipboard * const restrict clipb
 			XCB_CW_EVENT_MASK,
 			(uint32_t []) { 0 });
 
+	xcb_selection_notify_event_t selNotifyEv = { 0 };
 	selNotifyEv.response_type = XCB_SELECTION_NOTIFY;
 	selNotifyEv.requestor = selReqEv->requestor;
 	selNotifyEv.selection = selReqEv->selection;

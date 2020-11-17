@@ -14,8 +14,6 @@
 
 struct protocol_Xcb
 {
-	enum protocol_Type type;
-
 	// Items
 	struct ui_xcb_Pixmap pixmap;
 	struct protocol_Links links;
@@ -37,8 +35,7 @@ void protocol_Xcb_init(struct protocol_Xcb *pgxcb,
 		struct ui_xcb_Subwindow *subwindow,
 		const uint32_t width,
 		const uint32_t height,
-		const uint32_t backgroundColor,
-		const enum protocol_Type type);
+		const uint32_t backgroundColor);
 
 void protocol_Xcb_deinit(struct protocol_Xcb *pgxcb);
 
@@ -56,6 +53,12 @@ void protocol_Xcb_offset(struct protocol_Xcb *pgxcb,
 
 void protocol_Xcb_padding(struct protocol_Xcb *pgxcb,
 		const uint32_t left, const uint32_t right);
+
+bool protocol_Xcb_hoverEnter(struct protocol_Xcb *pgxcb,
+		const xcb_enter_notify_event_t *const restrict enterEv);
+
+bool protocol_Xcb_hoverLeave(struct protocol_Xcb *pgxcb,
+		const xcb_leave_notify_event_t *const restrict leaveEv);
 
 #endif // PROTOCOL_XCB_H
 

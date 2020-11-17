@@ -18,19 +18,9 @@ protocol_Xcb_init(struct protocol_Xcb *pgxcb,
 		struct ui_xcb_Subwindow *subwindow,
 		const uint32_t width,
 		const uint32_t height,
-		const uint32_t backgroundColor,
-		const enum protocol_Type type)
+		const uint32_t backgroundColor)
 {
-	pgxcb->type = type;
-
-	switch (type)
-	{
-	case PROTOCOL_TYPE_GOPHER:
-		pgxcb->font = &font[4];
-		break;
-	default:
-		pgxcb->font = font;
-	}
+	pgxcb->font = font;
 
 	ui_xcb_Pixmap_init(&pgxcb->pixmap, context, drawable, width, height,
 			backgroundColor);
@@ -125,5 +115,29 @@ protocol_Xcb_padding(struct protocol_Xcb *pgxcb,
 {
 	pgxcb->paddingLeft = left;
 	pgxcb->paddingRight = right;
+}
+
+bool
+protocol_Xcb_hoverEnter(struct protocol_Xcb *pgxcb,
+		const xcb_enter_notify_event_t *const restrict enterEv)
+{
+	if (pgxcb->subwindow->id == enterEv->event)
+	{
+		return true;
+	}
+
+	return protocol_Links_hoverEnter(&pgxcb->links, enterEv);
+}
+
+bool
+protocol_Xcb_hoverLeave(struct protocol_Xcb *pgxcb,
+		const xcb_leave_notify_event_t *const restrict leaveEv)
+{
+	if (pgxcb->subwindow->id == leaveEv->event)
+	{
+		return true;
+	}
+
+	return protocol_Links_hoverLeave(&pgxcb->links, leaveEv);
 }
 

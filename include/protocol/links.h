@@ -46,5 +46,11 @@ void protocol_Links_render(struct protocol_Links *links,
 		const int16_t x, const int16_t y,
 		const uint32_t width, const uint32_t height);
 
+bool protocol_Links_hoverEnter(struct protocol_Links *links,
+		const xcb_enter_notify_event_t *const restrict enterEv);
+
+bool protocol_Links_hoverLeave(struct protocol_Links *links,
+		const xcb_leave_notify_event_t *const restrict leaveEv);
+
 #endif // PROTOCOL_LINKS_H
 
