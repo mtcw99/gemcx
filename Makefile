@@ -30,6 +30,7 @@ src/ui/xcb/cursor.c
 src/ui/xcb/monitors.c
 src/ui/xcb/textInput.c
 src/ui/xcb/clipboard.c
+src/ui/xcb/menu.c
 src/util/memory.c
 src/util/socket.c
 endef
@@ -40,7 +41,7 @@ CC = cc
 CFLAGS = -std=c99 -pedantic -Wall -D_POSIX_C_SOURCE=200809L 
 CFLAGS_DEBUG = -O0 -g -DDEBUG
 CFLAGS_RELEASE = -Os -flto
-INCLUDEDIR = include/
+INCLUDEDIRS = -Iinclude/ -Ivendor/include/
 LIBS = -lssl -lcrypto -lxcb -lxcb-cursor -lxcb-icccm -lxcb-randr
 PKG = pangocairo fontconfig xkbcommon xkbcommon-x11
 PKGCFG = `pkg-config --libs --cflags ${PKG}`
@@ -50,12 +51,12 @@ DISTDIR = ${NAME}-${VERSION}
 
 build/${NAME}: ${SRC}
 	@mkdir -p build/
-	@${CC} -o build/${NAME} ${CFLAGS} ${CFLAGS_RELEASE} ${SRC} -I${INCLUDEDIR} ${PKGCFG} ${LIBS}
+	@${CC} -o build/${NAME} ${CFLAGS} ${CFLAGS_RELEASE} ${SRC} ${INCLUDEDIRS} ${PKGCFG} ${LIBS}
 	@echo "release build: executable in build/${NAME}"
 
 debug: ${SRC}
 	@mkdir -p build/
-	@${CC} -o build/${NAME} ${CFLAGS} ${CFLAGS_DEBUG} ${SRC} -I${INCLUDEDIR} ${PKGCFG} ${LIBS}
+	@${CC} -o build/${NAME} ${CFLAGS} ${CFLAGS_DEBUG} ${SRC} ${INCLUDEDIRS} ${PKGCFG} ${LIBS}
 	@echo "debug build: executable in build/${NAME}"
 
 clean:

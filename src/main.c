@@ -20,6 +20,23 @@
 #include "ui/xcb/subwindow.h"
 #include "ui/xcb/textInput.h"
 #include "ui/xcb/clipboard.h"
+#include "ui/xcb/menu.h"
+
+enum gemcx_menu
+{
+	GEMCX_MENU_SETTINGS = 0,
+	GEMCX_MENU_EXIT,
+
+	GEMCX_MENU__TOTAL
+};
+
+static const struct
+{
+	const char *label;
+} gemcxMenuList[GEMCX_MENU__TOTAL] = {
+	[GEMCX_MENU_SETTINGS] = {"Settings"},
+	[GEMCX_MENU_EXIT] = {"Exit"},
+};
 
 int
 main(int argc, char **argv)
@@ -77,8 +94,6 @@ main(int argc, char **argv)
 #endif
 	fclose(reqFp);
 
-	// XCB TEMPS
-	
 	struct ui_xcb_Context context = { 0 };
 	ui_xcb_Context_init(&context);
 
@@ -126,7 +141,6 @@ main(int argc, char **argv)
 	ui_xcb_Subwindow_show(&contentSubWindow, true);
 
 	// Control top bar
-
 	struct ui_xcb_Subwindow controlBarSubWindow = { 0 };
 	ui_xcb_Subwindow_init(&controlBarSubWindow, &context, window.id,
 			0x111111, 0xEEEEEE, 0,
@@ -150,6 +164,28 @@ main(int argc, char **argv)
 			(const xcb_rectangle_t) { 0, 0, 70, contentSubWindowYDiff },
 			10, 2);
 	ui_xcb_Button_show(&controlBarMenuButton, true);
+
+	struct ui_xcb_Menu controlBarMenu = { 0 };
+	ui_xcb_Menu_init(&controlBarMenu, &context, &text[0],
+			window.id,
+			(const struct ui_xcb_MenuStyle) {
+				.backgroundColor = 0x444444,
+				.textColor = 0xEEEEEE,
+				.textX = 15,
+				.textY = 4,
+				.subWindowRect = {
+					.x = 0,
+					.y = contentSubWindowYDiff,
+					.width = 150,
+					.height = 400,
+				},
+				.buttonHeight = contentSubWindowYDiff
+			});
+
+	for (uint32_t i = 0; i < GEMCX_MENU__TOTAL; ++i)
+	{
+		ui_xcb_Menu_add(&controlBarMenu, gemcxMenuList[i].label);
+	}
 
 	char urlStr[256] = { 0 };
 	struct ui_xcb_TextInput urlInput = { 0 };
@@ -235,18 +271,15 @@ main(int argc, char **argv)
 		}	break;
 		case XCB_SELECTION_REQUEST:
 		{
-			// Copy operation (TODO)
-			//printf("XCB_SELECTION_REQUEST\n");
+			// Copy operation
 			ui_xcb_Clipboard_selectionRequest(&clipboard,
 					(xcb_selection_request_event_t *) event.generic_event);
 		}	break;
 		case XCB_PROPERTY_NOTIFY:
 		{
-			//printf("XCB_PROPERTY_NOTIFY\n");
 		}	break;
 		case XCB_SELECTION_CLEAR:
 		{
-			//printf("XCB_SELECTION_CLEAR: Lost selection ownership\n");
 		}	break;
 		case XCB_MAP_NOTIFY:
 		{
@@ -320,6 +353,7 @@ main(int argc, char **argv)
 			ui_xcb_Pixmap_render(&doubleBuffer, 0, 0);
 			ui_xcb_Button_render(&controlBarMenuButton);
 			ui_xcb_TextInput_render(&urlInput);
+			ui_xcb_Menu_render(&controlBarMenu);
 		}	break;
 		case XCB_BUTTON_PRESS:
 		{
@@ -332,11 +366,32 @@ main(int argc, char **argv)
 			case 1:	// Left-mouse click
 				urlInput.active = (urlInput.subwindow.id == bp->event);
 
+				int32_t menuRetVal = -1;
+				bool closeMenuAftEv = true;
+				if ((menuRetVal = ui_xcb_Menu_pressed(&controlBarMenu, bp)) != -1)
+				{
+					switch (menuRetVal)
+					{
+					case GEMCX_MENU_SETTINGS:
+						printf("settings\n");
+						break;
+					case GEMCX_MENU_EXIT:
+						ui_xcb_Event_close(&event);
+						break;
+					}
+				}
+
+				if (controlBarMenu.visible && closeMenuAftEv)
+				{
+					ui_xcb_Menu_show(&controlBarMenu, false);
+				}
+
 				if (ui_xcb_Button_pressed(&controlBarMenuButton, bp->event))
 				{
 					// TODO: xcb menu
-					printf("Menu pressed\n");
-					printf("URL String: %s\n", urlStr);
+					//printf("Menu pressed\n");
+					//printf("URL String: %s\n", urlStr);
+					ui_xcb_Menu_show(&controlBarMenu, true);
 					break;
 				}
 
@@ -399,7 +454,7 @@ main(int argc, char **argv)
 			ui_xcb_Key_set(&xkey, prEv->detail, prEv->state);
 			//printf("key: %s\n", xkey.buffer);
 
-			// COPY: Ctrl-c (TODO)
+			// COPY: Ctrl-c
 			if ((xkey.mask & XCB_KEY_BUT_MASK_CONTROL) &&
 					(xkey.keysymNoMask == XKB_KEY_c))
 			{
@@ -424,9 +479,11 @@ main(int argc, char **argv)
 
 			switch (xkey.keysymNoMask)
 			{
+#if 0
 			case XKB_KEY_Escape:
 				ui_xcb_Event_close(&event);
 				break;
+#endif
 			case XKB_KEY_Up:
 			case XKB_KEY_Page_Up:
 				mainAreaYoffset -= (xkey.keysymNoMask == XKB_KEY_Up) ? offsetSpeed : pageOffsetSpeed;
@@ -485,6 +542,7 @@ main(int argc, char **argv)
 	protocol_Xcb_deinit(&pxcb);
 	ui_xcb_Button_deinit(&controlBarMenuButton);
 	ui_xcb_TextInput_deinit(&urlInput);
+	ui_xcb_Menu_deinit(&controlBarMenu);
 
 	// xcb deinit
 	ui_xcb_Key_deinit(&xkey);
