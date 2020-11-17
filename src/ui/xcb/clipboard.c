@@ -144,8 +144,6 @@ ui_xcb_Clipboard_selectionNotify(struct ui_xcb_Clipboard * const restrict clipbo
 					selNotifyEv->property);
 		}
 	}
-
-	ui_xcb_Clipboard_selectionClear(clipboard);
 }
 
 void

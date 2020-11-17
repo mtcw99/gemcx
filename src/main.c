@@ -368,7 +368,7 @@ main(int argc, char **argv)
 
 				int32_t menuRetVal = -1;
 				bool closeMenuAftEv = true;
-				if ((menuRetVal = ui_xcb_Menu_pressed(&controlBarMenu, bp)) != -1)
+				if ((menuRetVal = ui_xcb_Menu_pressed(&controlBarMenu, bp)) >= 0)
 				{
 					switch (menuRetVal)
 					{
