@@ -38,13 +38,82 @@ static const struct
 	[GEMCX_MENU_EXIT] = {"Exit"},
 };
 
-static void
+static int32_t
 gemcx_xcb_connectUrl(struct protocol_Client *const restrict client,
 		struct protocol_Parser *const restrict parser,
 		const char *const restrict url)
 {
+	static bool parserHasInit = false;
+	printf("Connecting: '%s'\n", url);
+
 	protocol_Client_newUrl(client, url);
-	protocol_Parser_init(parser, client->type);
+	if (client->type == PROTOCOL_TYPE_FILE)
+	{
+		const uint32_t urlLen = strlen(url);
+
+		if (!strncmp(url + urlLen - 3, "gmi", 3))
+		{
+			protocol_Parser_setType(parser, PROTOCOL_TYPE_GEMINI);
+			printf("File type: gemini\n");
+		}
+		else if (!strncmp(url + urlLen - 6, "gopher", 6))
+		{
+			protocol_Parser_setType(parser, PROTOCOL_TYPE_GOPHER);
+			printf("File type: gopher\n");
+		}
+		else
+		{
+			fprintf(stderr, "Non supported file format\n");
+			return -1;
+		}
+	}
+	else
+	{
+		protocol_Parser_setType(parser, client->type);
+	}
+
+	int32_t retVal = 0;
+
+	if (parserHasInit)
+	{
+		protocol_Parser_deinit(parser);
+	}
+	protocol_Parser_init(parser);
+	parserHasInit = true;
+
+	if (client->type == PROTOCOL_TYPE_FILE)
+	{
+		protocol_Parser_parse(parser, url + strlen("file://"));
+	}
+	else
+	{
+		FILE *reqFp = tmpfile();
+		protocol_Client_printInfo(client);
+		const int32_t error = protocol_Client_request(client, reqFp);
+		if (error)
+		{
+			fprintf(stderr, "REQUEST ERROR: %s\n",
+					protocol_Client_getErrorStr(client, error));
+			retVal = -2;
+			goto connUrlExit;
+		}
+
+		if (parser->type == PROTOCOL_TYPE_GEMINI)
+		{
+			char line[1024] = { 0 };
+			rewind(reqFp);
+
+			// TEMP: Skip header
+			fgets(line, sizeof(line), reqFp);
+		}
+		protocol_Parser_parseFp(parser, reqFp, false);
+		fclose(reqFp);
+		reqFp = NULL;
+	}
+
+connUrlExit:
+
+	return retVal;
 }
 
 int
@@ -60,42 +129,13 @@ main(int argc, char **argv)
 	struct protocol_Client client = { 0 };
 	struct protocol_Parser parser = { 0 };
 
-#if 1
-	const char *url = "gopher://gopher.quux.org/1/";
-	const char *fileName = "example/out.gopher";
-#else
-	const char *url = "gemini://gemini.circumlunar.space/";
-	const char *fileName = "example/test.gmi";
-	//const char *fileName = "example/out.gmi";
-#endif
-	(void) url;
-	(void) fileName;
-	FILE *reqFp = tmpfile();
+	//const char *startUrl = "gopher://gopher.quux.org/1/";
+	//const char *startUrl = "file://example/out.gopher";
+	//const char *startUrl = "gemini://gemini.circumlunar.space/";
+	const char *startUrl = "file://example/test.gmi";
+	//const char *startUrl = "file://example/out.gmi";
 
-	gemcx_xcb_connectUrl(&client, &parser, url);
-#if 0
-	protocol_Client_newUrl(&client, url);
-	protocol_Client_printInfo(&client);
-	const int32_t error = protocol_Client_request(&client, reqFp);
-	if (error)
-	{
-		fprintf(stderr, "REQUEST ERROR: %s\n",
-				protocol_Client_getErrorStr(&client, error));
-	}
-
-	if (parser.type == PROTOCOL_TYPE_GEMINI)
-	{
-		char line[1024] = { 0 };
-		rewind(reqFp);
-
-		// TEMP: Skip header
-		fgets(line, sizeof(line), reqFp);
-	}
-	protocol_Parser_parseFp(&parser, reqFp, false);
-#else
-	protocol_Parser_parse(&parser, fileName);
-#endif
-	fclose(reqFp);
+	gemcx_xcb_connectUrl(&client, &parser, startUrl);
 
 	struct ui_xcb_Context context = { 0 };
 	ui_xcb_Context_init(&context);
@@ -194,7 +234,7 @@ main(int argc, char **argv)
 	}
 
 	char urlStr[256] = { 0 };
-	strcpy(urlStr, url);	// TEMP?
+	strcpy(urlStr, startUrl);	// TEMP?
 	struct ui_xcb_TextInput urlInput = { 0 };
 	ui_xcb_TextInput_init(&urlInput, &context, &text[4],
 			controlBarSubWindow.id,
@@ -533,6 +573,21 @@ main(int argc, char **argv)
 				if (mainAreaYoffset >= mainAreaYMax)
 				{
 					mainAreaYoffset = mainAreaYMax;
+				}
+				break;
+			case XKB_KEY_Return:
+				if (urlInput.active)
+				{
+					gemcx_xcb_connectUrl(&client, &parser, urlStr);
+					protocol_Xcb_itemsInit(&pxcb, &parser);
+
+					mainAreaYoffset = 0;
+					protocol_Xcb_offset(&pxcb, 0, -mainAreaYoffset);
+					mainAreaYMax = protocol_Xcb_render(&pxcb,
+							&parser);
+					ui_xcb_Pixmap_render(&mainArea, 0, 0);
+					ui_xcb_Pixmap_render(&doubleBuffer, 0, 0);
+					//mainAreaYMaxDuringRZ = mainAreaYMax;
 				}
 				break;
 			default:

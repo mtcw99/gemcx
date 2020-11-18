@@ -1,40 +1,25 @@
 #include "protocol/parser.h"
 
 void
-protocol_Parser_init(struct protocol_Parser *parser,
-		const enum protocol_Type type)
+protocol_Parser_init(struct protocol_Parser *parser)
 {
-	parser->type = type;
-
-	switch (parser->type)
-	{
-	case PROTOCOL_TYPE_GEMINI:
-		p_gemini_Parser_init(&parser->protocol.gemini);
-		break;
-	case PROTOCOL_TYPE_GOPHER:
-		p_gopher_Parser_init(&parser->protocol.gopher);
-		break;
-	default:
-		protocol_Type_assert(parser->type);
-		break;
-	}
+	p_gemini_Parser_init(&parser->protocol.gemini);
+	p_gopher_Parser_init(&parser->protocol.gopher);
 }
 
 void
 protocol_Parser_deinit(struct protocol_Parser *parser)
 {
-	switch (parser->type)
-	{
-	case PROTOCOL_TYPE_GEMINI:
-		p_gemini_Parser_deinit(&parser->protocol.gemini);
-		break;
-	case PROTOCOL_TYPE_GOPHER:
-		p_gopher_Parser_deinit(&parser->protocol.gopher);
-		break;
-	default:
-		protocol_Type_assert(parser->type);
-		break;
-	}
+	p_gemini_Parser_deinit(&parser->protocol.gemini);
+	p_gopher_Parser_deinit(&parser->protocol.gopher);
+}
+
+void
+protocol_Parser_setType(struct protocol_Parser *const restrict parser,
+		const enum protocol_Type type)
+{
+	protocol_Type_assert(type);
+	parser->type = type;
 }
 
 void

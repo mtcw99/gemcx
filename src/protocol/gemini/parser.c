@@ -76,6 +76,7 @@ p_gemini_Parser_deinit(struct p_gemini_Parser *parser)
 	}
 
 	util_memory_free(parser->array);
+	parser->array = NULL;
 	parser->length = 0;
 	parser->alloc = 0;
 } 
@@ -139,6 +140,10 @@ p_gemini_Parser__line(struct p_gemini_Parser_Line *lineContent,
 			// If its empty, then use link as the text
 			if (lineContent->content.link.text[0] == '\0')
 			{
+				lineContent->content.link.text = util_memory_realloc(
+						lineContent->content.link.text,
+						sizeof(char) * linkSplit + 1);
+
 				strcpy(lineContent->content.link.text,
 						lineContent->content.link.link);
 			}

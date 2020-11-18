@@ -109,6 +109,8 @@ ui_xcb_TextInput_modify(struct ui_xcb_TextInput * const textinput,
 			reRender = true;
 		}
 		break;
+	case XKB_KEY_Return:
+		break;
 	default:
 		if ((textinput->strLen + bufferLen) < textinput->strMax)
 		{

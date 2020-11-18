@@ -8,7 +8,7 @@ enum protocol_Type
 	PROTOCOL_TYPE_GEMINI = 0,
 	PROTOCOL_TYPE_GOPHER,
 
-	//PROTOCOL_TYPE_FILE,		// Local file
+	PROTOCOL_TYPE_FILE,		// Local file
 	//PROTOCOL_TYPE_ABOUT,		// Browser URL
 
 	PROTOCOL_TYPE__TOTAL

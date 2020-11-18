@@ -12,16 +12,18 @@ struct protocol_Parser
 {
 	enum protocol_Type type;
 
-	union
+	struct
 	{
 		struct p_gemini_Parser gemini;
 		struct p_gopher_Parser gopher;
 	} protocol;
 };
 
-void protocol_Parser_init(struct protocol_Parser *parser,
-		const enum protocol_Type type);
+void protocol_Parser_init(struct protocol_Parser *parser);
 void protocol_Parser_deinit(struct protocol_Parser *parser);
+
+void protocol_Parser_setType(struct protocol_Parser *const restrict parser,
+		const enum protocol_Type type);
 
 void protocol_Parser_parseFp(struct protocol_Parser *parser,
 		FILE *fp,

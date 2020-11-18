@@ -21,6 +21,7 @@ struct protocol_Xcb
 	uint32_t offsetY;
 	uint32_t paddingLeft;
 	uint32_t paddingRight;
+	bool hasItemsInit;
 
 	// Just Pointers
 	struct ui_xcb_Subwindow *subwindow;

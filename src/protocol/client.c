@@ -38,6 +38,11 @@ protocol_Client_newUrl(struct protocol_Client *client,
 		client->type = PROTOCOL_TYPE_GOPHER;
 		printf("protocol/Client/newUrl: Type: Gopher\n");
 	}
+	else if (!strcmp(client->host.scheme, "file"))
+	{
+		client->type = PROTOCOL_TYPE_FILE;
+		printf("protocol/Client/newUrl: Type: File\n");
+	}
 	else
 	{
 		fprintf(stderr, "ERROR: Unsupported scheme '%s'!\n",

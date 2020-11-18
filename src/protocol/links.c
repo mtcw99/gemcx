@@ -31,7 +31,7 @@ protocol_Links_init(struct protocol_Links *links,
 void
 protocol_Links_deinit(struct protocol_Links *links)
 {
-	if ((links->allocate > 0) && (links->links != NULL))
+	if (links->links != NULL)
 	{
 		for (uint32_t i = 0; i < links->length; ++i)
 		{
@@ -45,6 +45,12 @@ protocol_Links_deinit(struct protocol_Links *links)
 	links->links = NULL;
 	links->allocate = 0;
 	links->length = 0;
+}
+
+void
+protocol_Links_clear(struct protocol_Links *links)
+{
+	protocol_Links_deinit(links);
 }
 
 static void

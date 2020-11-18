@@ -27,6 +27,7 @@ protocol_Xcb_init(struct protocol_Xcb *pgxcb,
 	protocol_Links_init(&pgxcb->links, context, pgxcb->font, backgroundColor);
 	pgxcb->offsetX = 0;
 	pgxcb->offsetY = 0;
+	pgxcb->hasItemsInit = false;
 
 	pgxcb->subwindow = subwindow;
 	pgxcb->context = context;
@@ -46,6 +47,11 @@ void
 protocol_Xcb_itemsInit(struct protocol_Xcb *pgxcb,
 		struct protocol_Parser *parser)
 {
+	if (pgxcb->hasItemsInit)
+	{
+		protocol_Links_clear(&pgxcb->links);
+	}
+
 	switch (parser->type)
 	{
 	case PROTOCOL_TYPE_GEMINI:
@@ -56,8 +62,9 @@ protocol_Xcb_itemsInit(struct protocol_Xcb *pgxcb,
 		break;
 	default:
 		protocol_Type_assert(parser->type);
-		break;
+		return;
 	}
+	pgxcb->hasItemsInit = true;
 }
 
 uint32_t

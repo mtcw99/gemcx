@@ -118,6 +118,7 @@ util_memory_free(void *ptr)
 	{
 		mems.total -= mems.allocSize[index];
 		mems.allocSize[index] = 0;
+		mems.ptrs[index] = NULL;
 	}
 }
 

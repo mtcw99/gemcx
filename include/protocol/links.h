@@ -32,6 +32,8 @@ void protocol_Links_init(struct protocol_Links *links,
 		const uint32_t backgroundColor);
 
 void protocol_Links_deinit(struct protocol_Links *links);
+void protocol_Links_clear(struct protocol_Links *links);
+
 uint32_t protocol_Links_new(struct protocol_Links *links,
 		const char *str,
 		const char *ref,

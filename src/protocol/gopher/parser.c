@@ -108,9 +108,10 @@ p_gopher_Parser_init(struct p_gopher_Parser *parser)
 void
 p_gopher_Parser_deinit(struct p_gopher_Parser *parser)
 {
-	if (parser->alloc)
+	if (parser->array != NULL)
 	{
 		util_memory_free(parser->array);
+		parser->array = NULL;
 		parser->alloc = 0;
 		parser->length = 0;
 	}
