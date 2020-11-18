@@ -10,6 +10,7 @@ src/protocol/parser.c
 src/protocol/xcb.c
 src/protocol/client.c
 src/protocol/links.c
+src/protocol/historyStack.c
 src/protocol/gemini/client.c
 src/protocol/gemini/header.c
 src/protocol/gemini/parser.c
@@ -33,6 +34,7 @@ src/ui/xcb/clipboard.c
 src/ui/xcb/menu.c
 src/util/memory.c
 src/util/socket.c
+src/util/stack.c
 endef
 
 SRC := $(strip ${SRC})

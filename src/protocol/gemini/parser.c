@@ -95,13 +95,13 @@ p_gemini_Parser__lineLinkSplit(const char *line, const uint32_t size)
 	bool alphaNumChar = false;
 	for (uint32_t i = 0; i < size; ++i)
 	{
-		if (!alphaNumChar && (isalnum(line[i]) || ispunct(line[i])))
-		{
-			alphaNumChar = true;
-		}
-		else if (alphaNumChar && ((line[i] == ' ') || (line[i] == '\n')))
+		if (alphaNumChar && ((line[i] == ' ') || (line[i] == '\n') || (line[i] == '\t')))
 		{
 			return i;
+		}
+		else if (!alphaNumChar && ((line[i] != ' ') && (line[i] != '\n') && (line[i] != '\t')))
+		{
+			alphaNumChar = true;
 		}
 	}
 
@@ -123,6 +123,7 @@ p_gemini_Parser__line(struct p_gemini_Parser_Line *lineContent,
 			const uint32_t lineLinkSize = size - 2;
 			const uint32_t linkSplit = p_gemini_Parser__lineLinkSplit(
 					lineLink, lineLinkSize);
+			//printf("linesplit: %d | %s\n", linkSplit, lineLink);
 
 			lineContent->type = P_GEMINI_PARSER_TYPE_LINK;
 			lineContent->content.link.link = util_memory_calloc(sizeof(char),
@@ -134,7 +135,7 @@ p_gemini_Parser__line(struct p_gemini_Parser_Line *lineContent,
 					lineLink,
 					linkSplit);
 			strncpy(lineContent->content.link.text,
-					lineLink + linkSplit,
+					lineLink + linkSplit + 1,
 					lineLinkSize - linkSplit - 1);
 
 			// If its empty, then use link as the text

@@ -2,10 +2,12 @@
 
 #include "util/memory.h"
 #include "util/socket.h"
+#include "util/stack.h"
 
 #include "protocol/client.h"
 #include "protocol/parser.h"
 #include "protocol/xcb.h"
+#include "protocol/historyStack.h"
 
 #include "protocol/gemini/header.h"
 
@@ -126,7 +128,7 @@ connUrlExit:
 	return retVal;
 }
 
-void
+static void
 gemcx_xcb_connectUrlResetRender(struct protocol_Client *client,
 		struct protocol_Parser *parser,
 		char *urlStr,
@@ -135,7 +137,9 @@ gemcx_xcb_connectUrlResetRender(struct protocol_Client *client,
 		struct ui_xcb_TextInput *urlInput,
 		uint32_t *mainAreaYMax,
 		struct ui_xcb_Pixmap *mainArea,
-		struct ui_xcb_Pixmap *doubleBuffer)
+		struct ui_xcb_Pixmap *doubleBuffer,
+		struct protocol_HistoryStack *historyStack,
+		const bool pushUrl)
 {
 	gemcx_xcb_connectUrl(client, parser, urlStr);
 	strcpy(urlStr, protocol_Client_constructUrl(client));
@@ -148,6 +152,12 @@ gemcx_xcb_connectUrlResetRender(struct protocol_Client *client,
 			parser);
 	ui_xcb_Pixmap_render(mainArea, 0, 0);
 	ui_xcb_Pixmap_render(doubleBuffer, 0, 0);
+
+	if (pushUrl)
+	{
+		protocol_HistoryStack_push(historyStack, urlStr);
+	}
+	protocol_HistoryStack_print(historyStack);	// TEMP
 }
 
 int
@@ -165,8 +175,8 @@ main(int argc, char **argv)
 
 	//const char *startUrl = "gopher://gopher.quux.org/1/";
 	//const char *startUrl = "file://example/out.gopher";
-	//const char *startUrl = "gemini://gemini.circumlunar.space/";
-	const char *startUrl = "file://example/test.gmi";
+	const char *startUrl = "gemini://gemini.circumlunar.space/";
+	//const char *startUrl = "file://example/test.gmi";
 	//const char *startUrl = "file://example/out.gmi";
 
 	gemcx_xcb_connectUrl(&client, &parser, startUrl);
@@ -234,6 +244,9 @@ main(int argc, char **argv)
 			XCB_EVENT_MASK_BUTTON_RELEASE);
 	ui_xcb_Subwindow_show(&controlBarSubWindow, true);
 
+	uint32_t controlBarX = 0;
+
+	// Main Dropdown Menu button
 	struct ui_xcb_Button controlBarMenuButton = { 0 };
 	ui_xcb_Button_init(&controlBarMenuButton, "gemcx", &text[0],
 			&context, controlBarSubWindow.id,
@@ -243,6 +256,9 @@ main(int argc, char **argv)
 			0x222222, 0xFFFFFF);
 	ui_xcb_Button_show(&controlBarMenuButton, true);
 
+	controlBarX += 70;
+
+	// Main Dropdown Menu
 	struct ui_xcb_Menu controlBarMenu = { 0 };
 	ui_xcb_Menu_init(&controlBarMenu, &context, &text[0],
 			window.id,
@@ -267,13 +283,38 @@ main(int argc, char **argv)
 		ui_xcb_Menu_add(&controlBarMenu, gemcxMenuList[i].label);
 	}
 
+	// Back button
+	struct ui_xcb_Button controlBarBack = { 0 };
+	ui_xcb_Button_init(&controlBarBack, "<=", &text[4],
+			&context, controlBarSubWindow.id,
+			0x444444, 0xEEEEEE, 0x000000, 0,
+			(const xcb_rectangle_t) { controlBarX, 0, 50, contentSubWindowYDiff },
+			10, 5,
+			0x222222, 0xFFFFFF);
+	ui_xcb_Button_show(&controlBarBack, true);
+
+	controlBarX += 50;
+
+	// Forward button
+	struct ui_xcb_Button controlBarForward = { 0 };
+	ui_xcb_Button_init(&controlBarForward, "=>", &text[4],
+			&context, controlBarSubWindow.id,
+			0x444444, 0xEEEEEE, 0x000000, 0,
+			(const xcb_rectangle_t) { controlBarX, 0, 50, contentSubWindowYDiff },
+			10, 5,
+			0x222222, 0xFFFFFF);
+	ui_xcb_Button_show(&controlBarForward, true);
+
+	controlBarX += 50;
+
+	// URL Input Bar
 	char urlStr[1024] = { 0 };
 	strcpy(urlStr, startUrl);	// TEMP?
 	struct ui_xcb_TextInput urlInput = { 0 };
 	ui_xcb_TextInput_init(&urlInput, &context, &text[4],
 			controlBarSubWindow.id,
 			(const xcb_rectangle_t) {
-				.x = 70,
+				.x = controlBarX,
 				.y = 0,
 				.width = 400,
 				.height = contentSubWindowYDiff
@@ -303,6 +344,10 @@ main(int argc, char **argv)
 
 	protocol_Xcb_itemsInit(&pxcb, &parser);
 	protocol_Xcb_padding(&pxcb, 10, 10);
+
+	struct protocol_HistoryStack historyStack = { 0 };
+	protocol_HistoryStack_init(&historyStack);
+	protocol_HistoryStack_push(&historyStack, urlStr);
 
 	xcb_flush(context.connection);
 	while (ui_xcb_Event_waitForEvent(&event))
@@ -395,7 +440,7 @@ main(int argc, char **argv)
 			contentSubWindow.rect.width = cnEvent->width;
 			contentSubWindow.rect.height = cnEvent->height - contentSubWindowYDiff - 2;
 			controlBarSubWindow.rect.width = cnEvent->width;
-			urlInput.subwindow.rect.width = cnEvent->width - 70;
+			urlInput.subwindow.rect.width = cnEvent->width - controlBarX;
 
 			ui_xcb_Subwindow_applyAttributes(&contentSubWindow);
 			ui_xcb_Subwindow_applyAttributes(&controlBarSubWindow);
@@ -433,6 +478,8 @@ main(int argc, char **argv)
 			(void) expose;
 			ui_xcb_Pixmap_render(&doubleBuffer, 0, 0);
 			ui_xcb_Button_render(&controlBarMenuButton);
+			ui_xcb_Button_render(&controlBarBack);
+			ui_xcb_Button_render(&controlBarForward);
 			ui_xcb_TextInput_render(&urlInput);
 			ui_xcb_Menu_render(&controlBarMenu);
 		}	break;
@@ -441,6 +488,12 @@ main(int argc, char **argv)
 			xcb_enter_notify_event_t *enterEv =
 				(xcb_enter_notify_event_t *) event.generic_event;
 			if (ui_xcb_Button_hoverEnter(&controlBarMenuButton, enterEv))
+			{
+			}
+			else if (ui_xcb_Button_hoverEnter(&controlBarBack, enterEv))
+			{
+			}
+			else if (ui_xcb_Button_hoverEnter(&controlBarForward, enterEv))
 			{
 			}
 			else if (ui_xcb_Menu_hoverEnter(&controlBarMenu, enterEv))
@@ -455,6 +508,12 @@ main(int argc, char **argv)
 			xcb_leave_notify_event_t *leaveEv =
 				(xcb_leave_notify_event_t *) event.generic_event;
 			if (ui_xcb_Button_hoverLeave(&controlBarMenuButton, leaveEv))
+			{
+			}
+			else if (ui_xcb_Button_hoverLeave(&controlBarBack, leaveEv))
+			{
+			}
+			else if (ui_xcb_Button_hoverLeave(&controlBarForward, leaveEv))
 			{
 			}
 			else if (ui_xcb_Menu_hoverLeave(&controlBarMenu, leaveEv))
@@ -500,6 +559,41 @@ main(int argc, char **argv)
 					ui_xcb_Menu_show(&controlBarMenu, true);
 					break;
 				}
+				else if (ui_xcb_Button_pressed(&controlBarBack, bp->event))
+				{
+					// Back button action
+					if (protocol_HistoryStack_enableBackward(&historyStack))
+					{
+						printf("Back\n");
+						protocol_HistoryStack_pop(&historyStack);
+						char *popUrl = protocol_HistoryStack_pop(&historyStack);
+						printf("URL: %s\n", popUrl);
+						strcpy(urlStr, popUrl);
+						gemcx_xcb_connectUrlResetRender(
+								&client,
+								&parser,
+								urlStr,
+								&pxcb,
+								&mainAreaYoffset,
+								&urlInput,
+								&mainAreaYMax,
+								&mainArea,
+								&doubleBuffer,
+								&historyStack,
+								false);
+					}
+					break;
+				}
+				else if (ui_xcb_Button_pressed(&controlBarForward, bp->event))
+				{
+					// Forward button action
+					if (protocol_HistoryStack_enableForward(&historyStack))
+					{
+						printf("Forward\n");
+						strcpy(urlStr, protocol_HistoryStack_forward(&historyStack));
+					}
+					break;
+				}
 
 				for (uint32_t i = 0; i < pxcb.links.length; ++i)
 				{
@@ -529,7 +623,9 @@ main(int argc, char **argv)
 								&urlInput,
 								&mainAreaYMax,
 								&mainArea,
-								&doubleBuffer);
+								&doubleBuffer,
+								&historyStack,
+								true);
 						break;
 					}
 				}
@@ -642,7 +738,9 @@ main(int argc, char **argv)
 							&urlInput,
 							&mainAreaYMax,
 							&mainArea,
-							&doubleBuffer);
+							&doubleBuffer,
+							&historyStack,
+							true);
 				}
 				break;
 			default:
@@ -684,7 +782,11 @@ main(int argc, char **argv)
 		}
 	}
 
+	protocol_HistoryStack_deinit(&historyStack);
+
 	protocol_Xcb_deinit(&pxcb);
+	ui_xcb_Button_deinit(&controlBarForward);
+	ui_xcb_Button_deinit(&controlBarBack);
 	ui_xcb_Button_deinit(&controlBarMenuButton);
 	ui_xcb_TextInput_deinit(&urlInput);
 	ui_xcb_Menu_deinit(&controlBarMenu);
