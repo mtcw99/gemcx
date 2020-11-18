@@ -33,6 +33,11 @@ util_socket_Host_init(struct util_socket_Host *host, const char *url)
 	const uint32_t urlSize = strlen(url);
 	bool schemeRead = util_socket_urlHasScheme(url, urlSize);
 
+	// Clear all names to zeros
+	memset(host->scheme, '\0', sizeof(host->scheme));
+	memset(host->hostname, '\0', sizeof(host->hostname));
+	memset(host->resource, '\0', sizeof(host->resource));
+
 	if (!schemeRead)
 	{
 		// Assume default protocol: gemini

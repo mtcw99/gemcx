@@ -728,6 +728,7 @@ main(int argc, char **argv)
 			case XKB_KEY_Return:
 				if (urlInput.active)
 				{
+					printf("urlStr: %s\n", urlStr);
 					// Go to a new specified URL
 					gemcx_xcb_connectUrlResetRender(
 							&client,
