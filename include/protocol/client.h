@@ -20,6 +20,7 @@ struct protocol_Client
 void protocol_Client_newUrl(struct protocol_Client *client, const char *url);
 int32_t protocol_Client_request(struct protocol_Client *client,
 		FILE *fp);
+char *protocol_Client_constructUrl(struct protocol_Client *client);
 
 void protocol_Client_printInfo(const struct protocol_Client *client);
 const char *protocol_Client_getErrorStr(const struct protocol_Client *client,

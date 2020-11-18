@@ -89,6 +89,13 @@ ui_xcb_TextInput_render(struct ui_xcb_TextInput * const textinput)
 }
 
 void
+ui_xcb_TextInput_textReRender(struct ui_xcb_TextInput *const textinput)
+{
+	textinput->strLen = strlen(textinput->str);
+	ui_xcb_TextInput__renderTextToPixmap(textinput);
+}
+
+void
 ui_xcb_TextInput_modify(struct ui_xcb_TextInput * const textinput,
 		const struct ui_xcb_Key * const xkey)
 {
@@ -132,8 +139,7 @@ ui_xcb_TextInput_append(struct ui_xcb_TextInput * const textinput,
 		const char *str,
 		const uint32_t strLength)
 {
-	if ((textinput->strLen + strLength) < textinput->strMax)
-	{
+	if ((textinput->strLen + strLength) < textinput->strMax) {
 		strcat(textinput->str, str);
 		textinput->strLen += strLength;
 		ui_xcb_TextInput__renderTextToPixmap(textinput);

@@ -11,13 +11,38 @@ enum util_socket_UrlFind
 	UTIL_SOCKET_URIFIND_RESOURCE
 };
 
+bool
+util_socket_urlHasScheme(const char *url,
+		const uint32_t urlSize)
+{
+	for (uint32_t i = 2; i < urlSize; ++i)
+	{
+		if (url[i - 2] == ':' &&
+				url[i - 1] == '/' &&
+				url[i] == '/')
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 void
 util_socket_Host_init(struct util_socket_Host *host, const char *url)
 {
 	const uint32_t urlSize = strlen(url);
-	enum util_socket_UrlFind urlFind = UTIL_SOCKET_URIFIND_PROTOCOL;
+	bool schemeRead = util_socket_urlHasScheme(url, urlSize);
 
-	bool schemeRead = true;
+	if (!schemeRead)
+	{
+		// Assume default protocol: gemini
+		memset(host->scheme, 0, sizeof(host->scheme));
+		strcpy(host->scheme, "gemini");
+	}
+
+	enum util_socket_UrlFind urlFind = (schemeRead) ?
+			UTIL_SOCKET_URIFIND_PROTOCOL :
+			UTIL_SOCKET_URIFIND_HOSTNAME;
 
 	uint32_t schemeSize = 0;
 	uint32_t hostnameSize = 0;
@@ -67,6 +92,13 @@ util_socket_Host_init(struct util_socket_Host *host, const char *url)
 		}
 	}
 	host->resource[resourceSize] = '\0';
+
+	// No resource found, assume '/'
+	if (resourceSize == 0)
+	{
+		host->resource[0] = '/';
+		host->resource[1] = '\0';
+	}
 }
 
 void
@@ -78,6 +110,14 @@ util_socket_Host_printInfo(const struct util_socket_Host *host)
 			"\tResource: %s\n\n",
 			host->scheme, host->hostname,
 			host->resource);
+}
+
+char *
+util_socket_Host_constructUrl(const struct util_socket_Host *host)
+{
+	static char url[1024] = { 0 };
+	sprintf(url, "%s://%s%s", host->scheme, host->hostname, host->resource);
+	return url;
 }
 
 void *

@@ -66,6 +66,12 @@ protocol_Client_request(struct protocol_Client *client,
 	return 0;
 }
 
+char *
+protocol_Client_constructUrl(struct protocol_Client *client)
+{
+	return util_socket_Host_constructUrl(&client->host);
+}
+
 void
 protocol_Client_printInfo(const struct protocol_Client *client)
 {

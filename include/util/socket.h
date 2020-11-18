@@ -19,8 +19,10 @@ struct util_socket_Host
 	char resource[256];
 };
 
+bool util_socket_urlHasScheme(const char *url, const uint32_t urlSize);
 void util_socket_Host_init(struct util_socket_Host *host, const char *url);
 void util_socket_Host_printInfo(const struct util_socket_Host *host);
+char *util_socket_Host_constructUrl(const struct util_socket_Host *host);
 void *util_socket_getInAddr(struct sockaddr *sa);
 int32_t util_socket_connect(const char *hostname, const char *port, int32_t *sockfd);
 

@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "util/memory.h"
+#include "util/socket.h"
 
 #include "protocol/client.h"
 #include "protocol/parser.h"
@@ -37,6 +38,15 @@ static const struct
 	[GEMCX_MENU_SETTINGS] = {"Settings"},
 	[GEMCX_MENU_EXIT] = {"Exit"},
 };
+
+static char *
+firstNonWhiteSpace(char *str)
+{
+	char *fStr = str;
+	while (*fStr == ' ')
+		++fStr;
+	return fStr;
+}
 
 static int32_t
 gemcx_xcb_connectUrl(struct protocol_Client *const restrict client,
@@ -114,6 +124,30 @@ gemcx_xcb_connectUrl(struct protocol_Client *const restrict client,
 connUrlExit:
 
 	return retVal;
+}
+
+void
+gemcx_xcb_connectUrlResetRender(struct protocol_Client *client,
+		struct protocol_Parser *parser,
+		char *urlStr,
+		struct protocol_Xcb *pxcb,
+		int32_t *mainAreaYoffset,
+		struct ui_xcb_TextInput *urlInput,
+		uint32_t *mainAreaYMax,
+		struct ui_xcb_Pixmap *mainArea,
+		struct ui_xcb_Pixmap *doubleBuffer)
+{
+	gemcx_xcb_connectUrl(client, parser, urlStr);
+	strcpy(urlStr, protocol_Client_constructUrl(client));
+	ui_xcb_TextInput_textReRender(urlInput);
+	protocol_Xcb_itemsInit(pxcb, parser);
+
+	*mainAreaYoffset = 0;
+	protocol_Xcb_offset(pxcb, 0, -*mainAreaYoffset);
+	*mainAreaYMax = protocol_Xcb_render(pxcb,
+			parser);
+	ui_xcb_Pixmap_render(mainArea, 0, 0);
+	ui_xcb_Pixmap_render(doubleBuffer, 0, 0);
 }
 
 int
@@ -233,7 +267,7 @@ main(int argc, char **argv)
 		ui_xcb_Menu_add(&controlBarMenu, gemcxMenuList[i].label);
 	}
 
-	char urlStr[256] = { 0 };
+	char urlStr[1024] = { 0 };
 	strcpy(urlStr, startUrl);	// TEMP?
 	struct ui_xcb_TextInput urlInput = { 0 };
 	ui_xcb_TextInput_init(&urlInput, &context, &text[4],
@@ -463,9 +497,6 @@ main(int argc, char **argv)
 
 				if (ui_xcb_Button_pressed(&controlBarMenuButton, bp->event))
 				{
-					// TODO: xcb menu
-					//printf("Menu pressed\n");
-					//printf("URL String: %s\n", urlStr);
 					ui_xcb_Menu_show(&controlBarMenu, true);
 					break;
 				}
@@ -476,6 +507,29 @@ main(int argc, char **argv)
 					{
 						const struct protocol_Link *link = &pxcb.links.links[i];
 						printf("%d: ref: %s\n", i, link->ref);
+						// TODO: Connect to new URL
+						if (util_socket_urlHasScheme(link->ref, strlen(link->ref)))
+						{
+							strcpy(urlStr, link->ref);
+						}
+						else
+						{
+							sprintf(urlStr, "%s://%s/%s",
+									client.host.scheme,
+									client.host.hostname,
+									firstNonWhiteSpace(link->ref));
+						}
+
+						gemcx_xcb_connectUrlResetRender(
+								&client,
+								&parser,
+								urlStr,
+								&pxcb,
+								&mainAreaYoffset,
+								&urlInput,
+								&mainAreaYMax,
+								&mainArea,
+								&doubleBuffer);
 						break;
 					}
 				}
@@ -578,16 +632,17 @@ main(int argc, char **argv)
 			case XKB_KEY_Return:
 				if (urlInput.active)
 				{
-					gemcx_xcb_connectUrl(&client, &parser, urlStr);
-					protocol_Xcb_itemsInit(&pxcb, &parser);
-
-					mainAreaYoffset = 0;
-					protocol_Xcb_offset(&pxcb, 0, -mainAreaYoffset);
-					mainAreaYMax = protocol_Xcb_render(&pxcb,
-							&parser);
-					ui_xcb_Pixmap_render(&mainArea, 0, 0);
-					ui_xcb_Pixmap_render(&doubleBuffer, 0, 0);
-					//mainAreaYMaxDuringRZ = mainAreaYMax;
+					// Go to a new specified URL
+					gemcx_xcb_connectUrlResetRender(
+							&client,
+							&parser,
+							urlStr,
+							&pxcb,
+							&mainAreaYoffset,
+							&urlInput,
+							&mainAreaYMax,
+							&mainArea,
+							&doubleBuffer);
 				}
 				break;
 			default:

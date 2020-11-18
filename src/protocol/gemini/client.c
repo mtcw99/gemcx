@@ -220,7 +220,7 @@ p_gemini_Client_request(struct protocol_Client *client,
 	printf("send request...\n");
 	// Sends request (one CRLF terminated line)
 	char slRequest[2560] = { 0 };
-	sprintf(slRequest, "%s\r\n", client->url);
+	sprintf(slRequest, "%s\r\n", util_socket_Host_constructUrl(&client->host));
 	uint32_t slRequestLen = strlen(slRequest);
 	tls.res = BIO_write(tls.ssl_bio, slRequest, slRequestLen);
 	if (tls.res == -1)
