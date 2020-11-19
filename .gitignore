@@ -54,5 +54,4 @@ dkms.conf
 example/out.gmi
 build/
 vgcore.*
-gemcx
 
