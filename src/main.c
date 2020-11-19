@@ -26,6 +26,7 @@
 #include "ui/xcb/menu.h"
 
 #include "gemcx/xcb/controlBar.h"
+#include "gemcx/xcb/connectUrl.h"
 
 static char *
 firstNonWhiteSpace(char *str)
@@ -34,116 +35,6 @@ firstNonWhiteSpace(char *str)
 	while (*fStr == ' ')
 		++fStr;
 	return fStr;
-}
-
-static int32_t
-gemcx_xcb_connectUrl(struct protocol_Client *const restrict client,
-		struct protocol_Parser *const restrict parser,
-		const char *const restrict url)
-{
-	static bool parserHasInit = false;
-	printf("Connecting: '%s'\n", url);
-
-	protocol_Client_newUrl(client, url);
-	if (client->type == PROTOCOL_TYPE_FILE)
-	{
-		const uint32_t urlLen = strlen(url);
-
-		if (!strncmp(url + urlLen - 3, "gmi", 3))
-		{
-			protocol_Parser_setType(parser, PROTOCOL_TYPE_GEMINI);
-			printf("File type: gemini\n");
-		}
-		else if (!strncmp(url + urlLen - 6, "gopher", 6))
-		{
-			protocol_Parser_setType(parser, PROTOCOL_TYPE_GOPHER);
-			printf("File type: gopher\n");
-		}
-		else
-		{
-			fprintf(stderr, "Non supported file format\n");
-			return -1;
-		}
-	}
-	else
-	{
-		protocol_Parser_setType(parser, client->type);
-	}
-
-	int32_t retVal = 0;
-
-	if (parserHasInit)
-	{
-		protocol_Parser_deinit(parser);
-	}
-	protocol_Parser_init(parser);
-	parserHasInit = true;
-
-	if (client->type == PROTOCOL_TYPE_FILE)
-	{
-		protocol_Parser_parse(parser, url + strlen("file://"));
-	}
-	else
-	{
-		FILE *reqFp = tmpfile();
-		protocol_Client_printInfo(client);
-		const int32_t error = protocol_Client_request(client, reqFp);
-		if (error)
-		{
-			fprintf(stderr, "REQUEST ERROR: %s\n",
-					protocol_Client_getErrorStr(client, error));
-			retVal = -2;
-			goto connUrlExit;
-		}
-
-		if (parser->type == PROTOCOL_TYPE_GEMINI)
-		{
-			char line[1024] = { 0 };
-			rewind(reqFp);
-
-			// TEMP: Skip header
-			fgets(line, sizeof(line), reqFp);
-		}
-		protocol_Parser_parseFp(parser, reqFp, false);
-		fclose(reqFp);
-		reqFp = NULL;
-	}
-
-connUrlExit:
-
-	return retVal;
-}
-
-static void
-gemcx_xcb_connectUrlResetRender(struct protocol_Client *client,
-		struct protocol_Parser *parser,
-		char *urlStr,
-		struct protocol_Xcb *pxcb,
-		int32_t *mainAreaYoffset,
-		struct ui_xcb_TextInput *urlInput,
-		uint32_t *mainAreaYMax,
-		struct ui_xcb_Pixmap *mainArea,
-		struct ui_xcb_Pixmap *doubleBuffer,
-		struct protocol_HistoryStack *historyStack,
-		const bool pushUrl)
-{
-	gemcx_xcb_connectUrl(client, parser, urlStr);
-	strcpy(urlStr, protocol_Client_constructUrl(client));
-	ui_xcb_TextInput_textReRender(urlInput);
-	protocol_Xcb_itemsInit(pxcb, parser);
-
-	*mainAreaYoffset = 0;
-	protocol_Xcb_offset(pxcb, 0, -*mainAreaYoffset);
-	*mainAreaYMax = protocol_Xcb_render(pxcb,
-			parser);
-	ui_xcb_Pixmap_render(mainArea, 0, 0);
-	ui_xcb_Pixmap_render(doubleBuffer, 0, 0);
-
-	if (pushUrl)
-	{
-		protocol_HistoryStack_push(historyStack, urlStr);
-	}
-	protocol_HistoryStack_print(historyStack);	// TEMP
 }
 
 int
@@ -165,7 +56,7 @@ main(int argc, char **argv)
 	//const char *startUrl = "file://example/test.gmi";
 	//const char *startUrl = "file://example/out.gmi";
 
-	gemcx_xcb_connectUrl(&client, &parser, startUrl);
+	gemcx_xcb_ConnectUrl_connect(&client, &parser, startUrl);
 
 	struct ui_xcb_Context context = { 0 };
 	ui_xcb_Context_init(&context);
@@ -244,6 +135,18 @@ main(int argc, char **argv)
 	struct protocol_HistoryStack historyStack = { 0 };
 	protocol_HistoryStack_init(&historyStack);
 	protocol_HistoryStack_push(&historyStack, urlStr);
+
+	struct gemcx_xcb_ConnectUrl connectUrl = {
+		.client = &client,
+		.parser = &parser,
+		.pxcb = &pxcb,
+		.mainAreaYoffset = &mainAreaYoffset,
+		.urlInput = &controlBar.urlInput,
+		.mainAreaYMax = &mainAreaYMax,
+		.mainArea = &mainArea,
+		.doubleBuffer = &doubleBuffer,
+		.historyStack = &historyStack
+	};
 
 	xcb_flush(context.connection);
 	while (ui_xcb_Event_waitForEvent(&event))
@@ -397,17 +300,9 @@ main(int argc, char **argv)
 				{
 					if (connUrlRR)
 					{
-						gemcx_xcb_connectUrlResetRender(
-								&client,
-								&parser,
+						gemcx_xcb_ConnectUrl_connectRender(
+								&connectUrl,
 								urlStr,
-								&pxcb,
-								&mainAreaYoffset,
-								&controlBar.urlInput,
-								&mainAreaYMax,
-								&mainArea,
-								&doubleBuffer,
-								&historyStack,
 								false);
 					}
 					break;
@@ -434,17 +329,9 @@ main(int argc, char **argv)
 									firstNonWhiteSpace(link->ref));
 						}
 
-						gemcx_xcb_connectUrlResetRender(
-								&client,
-								&parser,
+						gemcx_xcb_ConnectUrl_connectRender(
+								&connectUrl,
 								urlStr,
-								&pxcb,
-								&mainAreaYoffset,
-								&controlBar.urlInput,
-								&mainAreaYMax,
-								&mainArea,
-								&doubleBuffer,
-								&historyStack,
 								true);
 						break;
 					}
@@ -550,17 +437,9 @@ main(int argc, char **argv)
 				{
 					printf("urlStr: %s\n", urlStr);
 					// Go to a new specified URL
-					gemcx_xcb_connectUrlResetRender(
-							&client,
-							&parser,
+					gemcx_xcb_ConnectUrl_connectRender(
+							&connectUrl,
 							urlStr,
-							&pxcb,
-							&mainAreaYoffset,
-							&controlBar.urlInput,
-							&mainAreaYMax,
-							&mainArea,
-							&doubleBuffer,
-							&historyStack,
 							true);
 				}
 				break;

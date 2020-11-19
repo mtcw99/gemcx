@@ -36,6 +36,7 @@ src/util/memory.c
 src/util/socket.c
 src/util/stack.c
 src/gemcx/xcb/controlBar.c
+src/gemcx/xcb/connectUrl.c
 endef
 
 SRC := $(strip ${SRC})
