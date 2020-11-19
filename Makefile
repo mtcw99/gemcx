@@ -37,6 +37,8 @@ src/util/socket.c
 src/util/stack.c
 src/gemcx/xcb/controlBar.c
 src/gemcx/xcb/connectUrl.c
+src/gemcx/xcb/globals.c
+src/gemcx/xcb/eventResponse.c
 endef
 
 SRC := $(strip ${SRC})
