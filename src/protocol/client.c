@@ -3,6 +3,8 @@
 #include "protocol/gemini/client.h"
 #include "protocol/gopher/client.h"
 
+#include "util/ex.h"
+
 #include <string.h>
 
 static bool ginitUsed = false;
@@ -26,6 +28,9 @@ protocol_Client_newUrl(struct protocol_Client *client,
 	util_socket_Host_init(&client->host, url);
 	strcpy(client->url, url);
 	client->localTmpPath[0] = '\0';
+
+	// Link sanatization
+	util_ex_rmchs(client->host.scheme, strlen(client->host.scheme), " ");
 
 	// Change type based on host scheme
 	if (!strcmp(client->host.scheme, "gemini"))

@@ -35,6 +35,7 @@ src/ui/xcb/menu.c
 src/util/memory.c
 src/util/socket.c
 src/util/stack.c
+src/util/ex.c
 src/gemcx/xcb/controlBar.c
 src/gemcx/xcb/connectUrl.c
 src/gemcx/xcb/globals.c

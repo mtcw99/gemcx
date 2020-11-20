@@ -34,8 +34,6 @@ gemcx_xcb_ConnectUrl_connect(struct protocol_Client *const restrict client,
 		protocol_Parser_setType(parser, client->type);
 	}
 
-	int32_t retVal = 0;
-
 	if (parserHasInit)
 	{
 		protocol_Parser_deinit(parser);
@@ -56,8 +54,9 @@ gemcx_xcb_ConnectUrl_connect(struct protocol_Client *const restrict client,
 		{
 			fprintf(stderr, "REQUEST ERROR: %s\n",
 					protocol_Client_getErrorStr(client, error));
-			retVal = -2;
-			goto connUrlExit;
+			fclose(reqFp);
+			reqFp = NULL;
+			return -2;
 		}
 
 		if (parser->type == PROTOCOL_TYPE_GEMINI)
@@ -73,9 +72,7 @@ gemcx_xcb_ConnectUrl_connect(struct protocol_Client *const restrict client,
 		reqFp = NULL;
 	}
 
-connUrlExit:
-
-	return retVal;
+	return 0;
 }
 
 void

@@ -4,6 +4,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <sys/time.h>
+#include <sys/socket.h>
+#include <fcntl.h>
+#include <poll.h>
+#include <time.h>
+
 enum util_socket_UrlFind 
 {
 	UTIL_SOCKET_URIFIND_PROTOCOL = 0,
@@ -155,23 +161,89 @@ util_socket_connect(const char *hostname, const char *port, int32_t *sockfd)
 		return -1;
 	}
 
+	const uint32_t timeoutSec = 5;
+	int32_t flags = 0;
+
 	struct addrinfo *p;
 	// Loop through all the results and connect to the first one
 	for (p = addrinfo; p != NULL; p = p->ai_next)
 	{
+		if (p->ai_family != AF_INET &&
+				p->ai_family != AF_INET6)
+		{
+			continue;
+		}
+
+		//*sockfd = socket(AF_INET, SOCK_STREAM, 0);
 		*sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
 		if (*sockfd == -1)
 		{
 			continue;
 		}
 
-		if (connect(*sockfd, p->ai_addr, p->ai_addrlen) != -1)
+		flags = fcntl(*sockfd, F_GETFL, 0);
+		fcntl(*sockfd, F_SETFL, flags | O_NONBLOCK);
+
+		if (connect(*sockfd, p->ai_addr, p->ai_addrlen) == -1)
 		{
-			break;	// Connection made
+			struct timespec now;
+			clock_gettime(CLOCK_MONOTONIC, &now);
+			struct timespec deadline = {
+				.tv_sec = now.tv_sec + timeoutSec,
+				.tv_nsec = now.tv_nsec
+			};
+			int32_t rc = 0;
+
+			do
+			{
+				clock_gettime(CLOCK_MONOTONIC, &now);
+				int32_t msToDeadline = (int32_t)
+						(((deadline.tv_sec - now.tv_sec) * 1000l) +
+						 ((deadline.tv_nsec - now.tv_nsec) / 1000000l));
+				if (msToDeadline < 0)
+				{
+					rc = 0;
+					break;
+				}
+
+				struct pollfd pfds[] = {
+					{ . fd = *sockfd, .events = POLLOUT }
+				};
+
+				rc = poll(pfds, 1, msToDeadline);
+
+				if (rc > 0)
+				{
+					int32_t error = 0;
+					socklen_t len = sizeof(error);
+					if (getsockopt(*sockfd, SOL_SOCKET, SO_ERROR, &error, &len) == 0)
+					{
+						errno = error;
+					}
+					if (error)
+					{
+						rc = -1;
+					}
+					else
+					{
+						goto connected;
+					}
+				}
+			} while(rc == -1 && errno == EINTR);
+
+			if (rc == 0)
+			{
+				errno = ETIMEDOUT;
+			}
 		}
+
+		fcntl(*sockfd, F_SETFL, flags);
 
 		close(*sockfd);
 	}
+
+connected:
+	fcntl(*sockfd, F_SETFL, flags);
 
 	if (p == NULL)
 	{
