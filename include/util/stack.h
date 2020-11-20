@@ -8,9 +8,9 @@
 struct util_Stack
 {
 	void **stack;
-	uint32_t head;
+	int32_t head;
+	int32_t maxHead;
 	uint32_t alloc;
-	uint32_t maxHead;
 };
 
 void util_Stack_init(struct util_Stack *const restrict stack);

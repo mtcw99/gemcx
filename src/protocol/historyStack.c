@@ -47,7 +47,7 @@ protocol_HistoryStack_enableForward(struct protocol_HistoryStack *history)
 bool
 protocol_HistoryStack_enableBackward(struct protocol_HistoryStack *history)
 {
-	return (!util_Stack_isEmpty(&history->stack) && (history->stack.head != 1));
+	return (!util_Stack_isEmpty(&history->stack) && (history->stack.head != 0));
 }
 
 void

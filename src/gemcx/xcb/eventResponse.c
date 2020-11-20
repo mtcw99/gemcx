@@ -344,7 +344,7 @@ void
 gemcx_xcb_EventResponse_response(const uint8_t responseType,
 		const xcb_generic_event_t *genericEvent)
 {
-	static void (* const eventsResp[XCB_NO_OPERATION])(
+	static void (*const eventsResp[XCB_NO_OPERATION])(
 			const xcb_generic_event_t *) = {
 		[XCB_CLIENT_MESSAGE] = gemcx_xcb_EventResponse__clientMessage,
 		[XCB_SELECTION_NOTIFY] = gemcx_xcb_EventResponse__selectionNotify,

@@ -221,10 +221,8 @@ gemcx_xcb_ControlBar_buttonPress(struct gemcx_xcb_ControlBar *controlBar,
 			// Back button action
 			if (protocol_HistoryStack_enableBackward(historyStack))
 			{
-				printf("Back\n");
-				protocol_HistoryStack_pop(historyStack);
 				char *popUrl = protocol_HistoryStack_pop(historyStack);
-				printf("URL: %s\n", popUrl);
+				printf("Back URL: %s\n", popUrl);
 				strcpy(urlStr, popUrl);
 				*connUrlRR = true;
 			}
@@ -235,8 +233,10 @@ gemcx_xcb_ControlBar_buttonPress(struct gemcx_xcb_ControlBar *controlBar,
 			// Forward button action
 			if (protocol_HistoryStack_enableForward(historyStack))
 			{
-				printf("Forward\n");
-				strcpy(urlStr, protocol_HistoryStack_forward(historyStack));
+				char *pushUrl = protocol_HistoryStack_forward(historyStack);
+				printf("Forward URL: %s\n", pushUrl);
+				strcpy(urlStr, pushUrl);
+				*connUrlRR = true;
 			}
 			return true;
 		}

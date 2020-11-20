@@ -11,9 +11,9 @@ void
 util_Stack_init(struct util_Stack *const restrict stack)
 {
 	stack->stack = NULL;
-	stack->head = 0;
 	stack->alloc = 0;
-	stack->maxHead = 0;
+	stack->head = -1;
+	stack->maxHead = -1;
 }
 
 void
@@ -25,9 +25,9 @@ util_Stack_deinit(struct util_Stack *const restrict stack)
 	}
 
 	stack->stack = NULL;
-	stack->head = 0;
 	stack->alloc = 0;
-	stack->maxHead = 0;
+	stack->head = -1;
+	stack->maxHead = -1;
 }
 
 static void
@@ -53,19 +53,19 @@ util_Stack_push(struct util_Stack *const restrict stack,
 {
 	util_Stack__expand(stack);
 	stack->maxHead += (stack->head == stack->maxHead);
-	stack->stack[stack->head++] = data;
+	stack->stack[++stack->head] = data;
 }
 
 void *
 util_Stack_pop(struct util_Stack *const restrict stack)
 {
-	return (stack->head == 0) ? NULL : stack->stack[--stack->head];
+	return (stack->head == -1) ? NULL : stack->stack[--stack->head];
 }
 
 void *
 util_Stack_forward(struct util_Stack *const restrict stack)
 {
-	return (util_Stack_hasForward(stack)) ? stack->stack[stack->head++] : NULL;
+	return (util_Stack_hasForward(stack)) ? stack->stack[++stack->head] : NULL;
 }
 
 bool
@@ -77,6 +77,6 @@ util_Stack_hasForward(struct util_Stack *const restrict stack)
 bool
 util_Stack_isEmpty(struct util_Stack *const restrict stack)
 {
-	return (stack->head == 0);
+	return (stack->head == -1);
 }
 
