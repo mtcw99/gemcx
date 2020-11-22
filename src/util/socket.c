@@ -174,7 +174,6 @@ util_socket_connect(const char *hostname, const char *port, int32_t *sockfd)
 			continue;
 		}
 
-		//*sockfd = socket(AF_INET, SOCK_STREAM, 0);
 		*sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
 		if (*sockfd == -1)
 		{

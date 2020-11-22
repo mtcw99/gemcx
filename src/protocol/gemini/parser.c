@@ -6,6 +6,7 @@
 #include <ctype.h>
 
 #include "util/memory.h"
+#include "util/ex.h"
 
 #define PARSER_BUFFER 1024
 #define LINE_ALLOC 32
@@ -148,6 +149,15 @@ p_gemini_Parser__line(struct p_gemini_Parser_Line *lineContent,
 				strcpy(lineContent->content.link.text,
 						lineContent->content.link.link);
 			}
+
+			// Clean up links
+			util_ex_rmchs(lineContent->content.link.text,
+					strlen(lineContent->content.link.text),
+					"\t", true);
+
+			util_ex_rmchs(lineContent->content.link.link,
+					strlen(lineContent->content.link.link),
+					"\t", true);
 		}
 		break;
 	case '#':	// Headers
@@ -271,6 +281,7 @@ p_gemini_Parser_parse(struct p_gemini_Parser *parser, const char *fileName)
 void
 p_gemini_Parser_print(const struct p_gemini_Parser *parser)
 {
+	printf("Parser lines length: %d\n", parser->length);
 	for (uint32_t i = 0; i < parser->length; ++i)
 	{
 		const struct p_gemini_Parser_Line *line = &parser->array[i];

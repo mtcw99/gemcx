@@ -175,18 +175,26 @@ gemcx_xcb_EventResponse__buttonPress(const xcb_generic_event_t *genericEvent)
 			{
 				const struct protocol_Link *link = &globals.pxcb.links.links[i];
 				printf("%d: ref: %s\n", i, link->ref);
-				// TODO: Connect to new URL
 				if (util_socket_urlHasScheme(link->ref, strlen(link->ref)))
 				{
 					strcpy(globals.urlStr, link->ref);
 				}
-				else
+				else if (link->ref[0] == '/')
 				{
-					sprintf(globals.urlStr, "%s://%s%s%s%s",
+					sprintf(globals.urlStr, "%s://%s%s%s",
 							globals.client.host.scheme,
 							globals.client.host.hostname,
 							(globals.client.type == PROTOCOL_TYPE_GOPHER) ? "/1" : "",
-							(link->ref[0] == '/') ? "" : "/",
+							firstNonWhiteSpace(link->ref));
+				}
+				else
+				{
+					const bool endWSlash = globals.client.host.resource[strlen(globals.client.host.resource) - 1] == '/';
+					sprintf(globals.urlStr, "%s://%s%s%s%s",
+							globals.client.host.scheme,
+							globals.client.host.hostname,
+							globals.client.host.resource,
+							(endWSlash) ? "" : "/",
 							firstNonWhiteSpace(link->ref));
 				}
 

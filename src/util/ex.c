@@ -3,20 +3,29 @@
 #include <string.h>
 
 uint32_t
-util_ex_rmchs(char *str, const uint32_t strSize, const char *rmChs)
+util_ex_rmchs(char *str, const uint32_t strSize, const char *rmChs,
+		const bool cleanDoubleWS)
 {
 	const uint32_t rmChsSize = strlen(rmChs);
 	uint32_t k = 0;
+	char prevCh = ' ';
 	for (uint32_t i = 0; i < strSize; ++i)
 	{
 		bool rmCh = false;
 
-		for (uint32_t j = 0; j < rmChsSize; ++j)
+		if (cleanDoubleWS && (prevCh == ' ' && str[i] == ' '))
 		{
-			if (str[i] == rmChs[j])
+			rmCh = true;
+		}
+		else
+		{
+			for (uint32_t j = 0; j < rmChsSize; ++j)
 			{
-				rmCh = true;
-				break;
+				if (str[i] == rmChs[j])
+				{
+					rmCh = true;
+					break;
+				}
 			}
 		}
 
@@ -24,6 +33,8 @@ util_ex_rmchs(char *str, const uint32_t strSize, const char *rmChs)
 		{
 			str[k++] = str[i];
 		}
+
+		prevCh = str[i];
 	}
 	str[k] = '\0';
 	return k;

@@ -13,7 +13,8 @@ gemcx_xcb_ConnectUrl_connect(struct protocol_Client *const restrict client,
 	{
 		const uint32_t urlLen = strlen(url);
 
-		if (!strncmp(url + urlLen - 3, "gmi", 3))
+		if (!strncmp(url + urlLen - 3, "gmi", 3) ||
+				!strncmp(url + urlLen - 6, "gemini", 6))
 		{
 			protocol_Parser_setType(parser, PROTOCOL_TYPE_GEMINI);
 			printf("File type: gemini\n");
@@ -66,8 +67,10 @@ gemcx_xcb_ConnectUrl_connect(struct protocol_Client *const restrict client,
 
 			// TEMP: Skip header
 			fgets(line, sizeof(line), reqFp);
+			printf("response header: %s\n", line);
 		}
 		protocol_Parser_parseFp(parser, reqFp, false);
+
 		fclose(reqFp);
 		reqFp = NULL;
 	}

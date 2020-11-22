@@ -76,3 +76,16 @@ protocol_Parser_render(const struct protocol_Parser *parser)
 	}
 }
 
+void
+protocol_Parser_print(const struct protocol_Parser *parser)
+{
+	switch (parser->type)
+	{
+	case PROTOCOL_TYPE_GEMINI:
+		p_gemini_Parser_print(&parser->protocol.gemini);
+		break;
+	default:
+		break;
+	}
+}
+

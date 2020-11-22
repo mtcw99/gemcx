@@ -18,10 +18,10 @@ main(int argc, char **argv)
 	printf("NOTICE: RUNNING DEBUG BUILD\n");
 #endif
 	const char *startUrl =
-		//"gemini://gemini.circumlunar.space/";
+		"gemini://gemini.circumlunar.space/";
 		//"gopher://gopher.quux.org/1/";
 		//"file://example/out.gopher";
-		"file://example/test.gmi";
+		//"file://example/test.gmi";
 		//"file://example/out.gmi";
 	
 	gemcx_xcb_Globals_init(startUrl);

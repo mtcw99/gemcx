@@ -31,6 +31,7 @@ void protocol_Parser_parseFp(struct protocol_Parser *parser,
 void protocol_Parser_parse(struct protocol_Parser *parser,
 		const char *filePath);
 void protocol_Parser_render(const struct protocol_Parser *parser);
+void protocol_Parser_print(const struct protocol_Parser *parser);
 
 #endif // PROTOCOL_PARSER_H
 

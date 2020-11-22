@@ -4,7 +4,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-uint32_t util_ex_rmchs(char *str, const uint32_t strSize, const char *rmChs);
+uint32_t util_ex_rmchs(char *str, const uint32_t strSize, const char *rmChs,
+		const bool cleanDoubleWS);
 
 #endif // UTIL_EX_H
 
