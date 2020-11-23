@@ -1,5 +1,7 @@
 #include "gemcx/xcb/connectUrl.h"
 
+#include "protocol/header.h"
+
 int32_t
 gemcx_xcb_ConnectUrl_connect(struct protocol_Client *const restrict client,
 		struct protocol_Parser *const restrict parser,
@@ -67,7 +69,34 @@ gemcx_xcb_ConnectUrl_connect(struct protocol_Client *const restrict client,
 
 			// TEMP: Skip header
 			fgets(line, sizeof(line), reqFp);
-			printf("response header: %s\n", line);
+			//printf("response header: %s\n", line);
+
+			struct protocol_Header header = { 0 };
+			protocol_Header_getLine(&header, line);
+			protocol_Header_print(&header);
+			const char *statusStr = protocol_Header_getStatusCodeStr(&header);
+			const int32_t statusCode = protocol_Header_getStatusCode(&header);
+			printf("connectUrl: Status string: %s\n", statusStr);
+			switch (statusCode)
+			{
+			case P_GEMINI_HEADER_STATUSCODE_SUCCESS:
+				printf("connectUrl: Success\n");
+				break;
+			case P_GEMINI_HEADER_STATUSCODE_INPUT:
+				// TODO
+				printf("connectUrl: input (not implemented)\n");
+				break;
+			case P_GEMINI_HEADER_STATUSCODE_REDIRECT:
+				printf("connectUrl: Redirect\n");
+				gemcx_xcb_ConnectUrl_connect(client, parser,
+						header.header.gemini.meta);
+				break;
+			case P_GEMINI_HEADER_STATUSCODE_CLIENT_CERTIFICATE_REQUIRED:
+			case P_GEMINI_HEADER_STATUSCODE_TEMPORARY_FAILURE:
+			case P_GEMINI_HEADER_STATUSCODE_PERMANENT_FAILURE:
+				printf("connectUrl: Failure\n");
+				break;
+			}
 		}
 		protocol_Parser_parseFp(parser, reqFp, false);
 

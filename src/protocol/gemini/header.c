@@ -27,6 +27,16 @@ p_gemini_Header_get(struct p_gemini_Header *header,
 }
 
 void
+p_gemini_Header_getLine(struct p_gemini_Header *header,
+		const char *line)
+{
+	const uint32_t lineLen = strlen(line);
+	strncpy(header->statusCode, line, 2);
+	strncpy(header->meta, line+3, lineLen-6);
+	header->statusCodeI32 = header->statusCode[0] - '0';
+}
+
+void
 p_gemini_Header_print(const struct p_gemini_Header *header)
 {
 	printf("Header:\n"

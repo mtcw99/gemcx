@@ -202,7 +202,14 @@ ui_xcb_Text_calcWidth(struct ui_xcb_Text *text,
 
 	for (uint32_t i = 0; i < strL; ++i)
 	{
-		totalWidth += text->symbolsWidth[(uint32_t) str[i]];
+		if (((uint32_t) str[i]) < 127)
+		{
+			totalWidth += text->symbolsWidth[(uint32_t) str[i]];
+		}
+		else
+		{
+			totalWidth += text->mostSymbolsWidth;
+		}
 	}
 
 	return totalWidth;

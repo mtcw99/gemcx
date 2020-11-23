@@ -11,6 +11,7 @@ src/protocol/xcb.c
 src/protocol/client.c
 src/protocol/links.c
 src/protocol/historyStack.c
+src/protocol/header.c
 src/protocol/gemini/client.c
 src/protocol/gemini/header.c
 src/protocol/gemini/parser.c

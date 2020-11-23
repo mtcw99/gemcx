@@ -21,10 +21,13 @@ struct p_gemini_Header
 {
 	char statusCode[3];
 	char meta[1025];
+	int32_t statusCodeI32;
 };
 
 void p_gemini_Header_get(struct p_gemini_Header *header,
 		FILE *fp);
+void p_gemini_Header_getLine(struct p_gemini_Header *header,
+		const char *line);
 void p_gemini_Header_print(const struct p_gemini_Header *header);
 bool p_gemini_Header_isGemini(const struct p_gemini_Header *header);
 const char *p_gemini_Header_getStatusCodeStr(const struct p_gemini_Header *header);
