@@ -50,7 +50,7 @@ struct gemcx_xcb_Globals
 
 extern struct gemcx_xcb_Globals globals;
 
-void gemcx_xcb_Globals_init(const char *startUrl);
+void gemcx_xcb_Globals_init(void);
 void gemcx_xcb_Globals_deinit(void);
 
 #endif // GEMCX_XCB_GLOBALS_H

@@ -6,6 +6,7 @@
 #include "gemcx/xcb/connectUrl.h"
 #include "gemcx/xcb/globals.h"
 #include "gemcx/xcb/eventResponse.h"
+#include "gemcx/config.h"
 
 int
 main(int argc, char **argv)
@@ -17,14 +18,10 @@ main(int argc, char **argv)
 	util_memory_enableDebug();
 	printf("NOTICE: RUNNING DEBUG BUILD\n");
 #endif
-	const char *startUrl =
-		"gemini://gemini.circumlunar.space/";
-		//"gopher://gopher.quux.org/1/";
-		//"file://example/out.gopher";
-		//"file://example/test.gmi";
-		//"file://example/out.gmi";
 	
-	gemcx_xcb_Globals_init(startUrl);
+	gemcx_Config_initDefaults();
+	gemcx_xcb_Globals_init();
+
 	xcb_flush(globals.context.connection);
 	while (ui_xcb_Event_waitForEvent(&globals.event))
 	{

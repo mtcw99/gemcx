@@ -1,11 +1,14 @@
 #include "gemcx/xcb/globals.h"
 
+#include "gemcx/config.h"
+
 struct gemcx_xcb_Globals globals = { 0 };
 
 void
-gemcx_xcb_Globals_init(const char *startUrl)
+gemcx_xcb_Globals_init(void)
 {
-	gemcx_xcb_ConnectUrl_connect(&globals.client, &globals.parser, startUrl);
+	gemcx_xcb_ConnectUrl_connect(&globals.client, &globals.parser,
+			configGlobal.str[GEMCX_CONFIG_STR_STARTURL]);
 	ui_xcb_Context_init(&globals.context);
 	ui_xcb_Clipboard_init(&globals.clipboard, &globals.context);
 
@@ -16,18 +19,18 @@ gemcx_xcb_Globals_init(const char *startUrl)
 	ui_xcb_Event_init(&globals.event, globals.context.connection);
 
 	const char *fontConfigs[UI_XCB_TEXTTYPE__TOTAL] = {
-		[UI_XCB_TEXTTYPE_TEXT] = "noto sans normal 12",
-		[UI_XCB_TEXTTYPE_H1] = "noto sans bold 24",
-		[UI_XCB_TEXTTYPE_H2] = "noto sans bold 18",
-		[UI_XCB_TEXTTYPE_H3] = "noto sans bold 14",
-		[UI_XCB_TEXTTYPE_PRE] = "liberation mono 12"
+		[UI_XCB_TEXTTYPE_TEXT] = configGlobal.str[GEMCX_CONFIG_STR_FONT_TEXT],
+		[UI_XCB_TEXTTYPE_H1] = configGlobal.str[GEMCX_CONFIG_STR_FONT_H1],
+		[UI_XCB_TEXTTYPE_H2] = configGlobal.str[GEMCX_CONFIG_STR_FONT_H2],
+		[UI_XCB_TEXTTYPE_H3] = configGlobal.str[GEMCX_CONFIG_STR_FONT_H3],
+		[UI_XCB_TEXTTYPE_PRE] = configGlobal.str[GEMCX_CONFIG_STR_FONT_PRE]
 	};
 	for (uint32_t i = 0; i < UI_XCB_TEXTTYPE__TOTAL; ++i)
 	{
 		ui_xcb_Text_init(&globals.text[i], &globals.context, fontConfigs[i]);
 	}
 
-	globals.contentSubWindowYDiff = 30;
+	globals.contentSubWindowYDiff = configGlobal.ints[GEMCX_CONFIG_INT_CONTROLBARHEIGHT];
 
 	// Content sub-window
 	ui_xcb_Subwindow_init(&globals.contentSubWindow, &globals.context, globals.window.id,
@@ -45,7 +48,7 @@ gemcx_xcb_Globals_init(const char *startUrl)
 			XCB_EVENT_MASK_BUTTON_RELEASE);
 	ui_xcb_Subwindow_show(&globals.contentSubWindow, true);
 
-	strcpy(globals.urlStr, startUrl);
+	strcpy(globals.urlStr, configGlobal.str[GEMCX_CONFIG_STR_STARTURL]);
 
 	gemcx_xcb_ControlBar_init(&globals.controlBar,
 			&globals.context,

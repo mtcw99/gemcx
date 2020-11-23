@@ -41,6 +41,7 @@ src/gemcx/xcb/controlBar.c
 src/gemcx/xcb/connectUrl.c
 src/gemcx/xcb/globals.c
 src/gemcx/xcb/eventResponse.c
+src/gemcx/config.c
 endef
 
 SRC := $(strip ${SRC})
