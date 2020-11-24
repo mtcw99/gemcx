@@ -13,6 +13,7 @@ static const char *const defStrs[GEMCX_CONFIG_STR__TOTAL] = {
 	[GEMCX_CONFIG_STR_FONT_H2] = "noto sans bold 18",
 	[GEMCX_CONFIG_STR_FONT_H3] = "noto sans bold 14",
 	[GEMCX_CONFIG_STR_FONT_PRE] = "liberation mono 12",
+	[GEMCX_CONFIG_STR_HTTP_OPEN] = "xdg-open",
 };
 static const int32_t defInts[GEMCX_CONFIG_INT__TOTAL] = {
 	[GEMCX_CONFIG_INT_CONTROLBARHEIGHT] = 30,

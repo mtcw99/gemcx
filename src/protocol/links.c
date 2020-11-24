@@ -6,6 +6,7 @@
 #include <assert.h>
 
 #include "util/memory.h"
+#include "util/ex.h"
 
 enum
 {
@@ -81,15 +82,31 @@ protocol_Links_new(struct protocol_Links *links,
 
 	const uint32_t index = links->length++;
 	struct protocol_Link *link = &links->links[index];
+	const uint32_t strSize = strlen(str);
 
-	link->str = util_memory_calloc(sizeof(char), strlen(str) + 1);
-	strcpy(link->str, str);
+	if ((strlen(ref) > 7) && (!strncmp(ref, "http://", 7) ||
+				!strncmp(ref, "https://", 8)))
+	{
+		// Its an HTTP(S) URL
+		char strTmp[1024] = { 0 };
+		strcpy(strTmp, str);
+		link->str = util_memory_calloc(sizeof(char), strSize + 11);
+		util_ex_rmchs(strTmp, strSize, "\n", true);
+		sprintf(link->str, "%s [%s] ",
+				strTmp,
+				(!strncmp(ref, "http://", 7)) ? "HTTP" : "HTTPS");
+	}
+	else
+	{
+		link->str = util_memory_calloc(sizeof(char), strSize + 1);
+		strcpy(link->str, str);
+	}
 
 	link->ref = util_memory_calloc(sizeof(char), strlen(ref) + 1);
 	strcpy(link->ref, ref);
 
 	memset(&link->button, 0, sizeof(struct ui_xcb_Button));
-	const uint32_t calcStrWidth = ui_xcb_Text_calcWidth(links->font, str);
+	const uint32_t calcStrWidth = ui_xcb_Text_calcWidth(links->font, link->str);
 	ui_xcb_Button_init(&link->button,
 			link->str,
 			links->font,

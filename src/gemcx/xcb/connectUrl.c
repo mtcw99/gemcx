@@ -1,6 +1,7 @@
 #include "gemcx/xcb/connectUrl.h"
 
 #include "protocol/header.h"
+#include "gemcx/config.h"
 
 int32_t
 gemcx_xcb_ConnectUrl_connect(struct protocol_Client *const restrict client,
@@ -34,7 +35,30 @@ gemcx_xcb_ConnectUrl_connect(struct protocol_Client *const restrict client,
 	}
 	else
 	{
-		protocol_Parser_setType(parser, client->type);
+		if (!strcmp(client->host.scheme, "gemini") ||
+				!strcmp(client->host.scheme, "gopher"))
+		{
+			protocol_Parser_setType(parser, client->type);
+		}
+		else if (!strcmp(client->host.scheme, "http") ||
+				!strcmp(client->host.scheme, "https"))
+		{
+			// Open in a different browser
+			const char *const openProg = configGlobal.str[GEMCX_CONFIG_STR_HTTP_OPEN];
+			const char *const openUrl = protocol_Client_constructUrl(client);
+			if (fork() == 0)
+			{
+				execlp(openProg, openProg, openUrl, NULL);
+				printf("Opened '%s' in a different browser\n",
+						openUrl);
+			}
+			return 1;
+		}
+		else
+		{
+			fprintf(stderr, "Non supported scheme\n");
+			return -2;
+		}
 	}
 
 	if (parserHasInit)
@@ -59,7 +83,7 @@ gemcx_xcb_ConnectUrl_connect(struct protocol_Client *const restrict client,
 					protocol_Client_getErrorStr(client, error));
 			fclose(reqFp);
 			reqFp = NULL;
-			return -2;
+			return -3;
 		}
 
 		if (parser->type == PROTOCOL_TYPE_GEMINI)
@@ -87,9 +111,11 @@ gemcx_xcb_ConnectUrl_connect(struct protocol_Client *const restrict client,
 				printf("connectUrl: input (not implemented)\n");
 				break;
 			case P_GEMINI_HEADER_STATUSCODE_REDIRECT:
-				printf("connectUrl: Redirect\n");
+				printf("connectUrl: Redirect (not implemented)\n");
+#if 0
 				gemcx_xcb_ConnectUrl_connect(client, parser,
 						header.header.gemini.meta);
+#endif
 				break;
 			case P_GEMINI_HEADER_STATUSCODE_CLIENT_CERTIFICATE_REQUIRED:
 			case P_GEMINI_HEADER_STATUSCODE_TEMPORARY_FAILURE:
