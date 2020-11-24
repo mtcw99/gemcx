@@ -96,6 +96,12 @@ protocol_Links_new(struct protocol_Links *links,
 				strTmp,
 				(!strncmp(ref, "http://", 7)) ? "HTTP" : "HTTPS");
 	}
+#if 0
+	else if ((strlen(ref) > 9) && (!strncmp(ref, "gopher://", 9)))
+	{
+		// Its a gopher URL
+	}
+#endif
 	else
 	{
 		link->str = util_memory_calloc(sizeof(char), strSize + 1);

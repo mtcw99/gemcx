@@ -11,6 +11,7 @@ gemcx_xcb_ConnectUrl_connect(struct protocol_Client *const restrict client,
 	static bool parserHasInit = false;
 	printf("Connecting: '%s'\n", url);
 
+	struct protocol_Client tmpClient = *client;
 	protocol_Client_newUrl(client, url);
 	if (client->type == PROTOCOL_TYPE_FILE)
 	{
@@ -30,6 +31,7 @@ gemcx_xcb_ConnectUrl_connect(struct protocol_Client *const restrict client,
 		else
 		{
 			fprintf(stderr, "Non supported file format\n");
+			*client = tmpClient;
 			return -1;
 		}
 	}
@@ -52,11 +54,13 @@ gemcx_xcb_ConnectUrl_connect(struct protocol_Client *const restrict client,
 				printf("Opened '%s' in a different browser\n",
 						openUrl);
 			}
+			*client = tmpClient;
 			return 1;
 		}
 		else
 		{
 			fprintf(stderr, "Non supported scheme\n");
+			*client = tmpClient;
 			return -2;
 		}
 	}
@@ -138,7 +142,18 @@ gemcx_xcb_ConnectUrl_connectRender(struct gemcx_xcb_ConnectUrl *connectUrl,
 		char *urlStr,
 		const bool pushUrl)
 {
-	gemcx_xcb_ConnectUrl_connect(connectUrl->client, connectUrl->parser, urlStr);
+	if (pushUrl)
+	{
+		protocol_HistoryStack_push(connectUrl->historyStack, urlStr);
+	}
+
+	const int32_t connVal = gemcx_xcb_ConnectUrl_connect(connectUrl->client, connectUrl->parser, urlStr);
+	if (connVal != 0)
+	{
+		strcpy(connectUrl->urlInput->str, protocol_HistoryStack_pop(connectUrl->historyStack));
+		return;
+	}
+
 	strcpy(urlStr, protocol_Client_constructUrl(connectUrl->client));
 	ui_xcb_TextInput_textReRender(connectUrl->urlInput);
 	protocol_Xcb_itemsInit(connectUrl->pxcb, connectUrl->parser);
@@ -150,10 +165,6 @@ gemcx_xcb_ConnectUrl_connectRender(struct gemcx_xcb_ConnectUrl *connectUrl,
 	ui_xcb_Pixmap_render(connectUrl->mainArea, 0, 0);
 	ui_xcb_Pixmap_render(connectUrl->doubleBuffer, 0, 0);
 
-	if (pushUrl)
-	{
-		protocol_HistoryStack_push(connectUrl->historyStack, urlStr);
-	}
 	protocol_HistoryStack_print(connectUrl->historyStack);	// TEMP
 }
 
