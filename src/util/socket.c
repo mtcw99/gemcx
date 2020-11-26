@@ -10,6 +10,8 @@
 #include <poll.h>
 #include <time.h>
 
+#include "util/ex.h"
+
 enum util_socket_UrlFind 
 {
 	UTIL_SOCKET_URIFIND_PROTOCOL = 0,
@@ -109,6 +111,11 @@ util_socket_Host_init(struct util_socket_Host *host, const char *url)
 	{
 		host->resource[0] = '/';
 		host->resource[1] = '\0';
+	}
+	else
+	{
+		resourceSize = util_ex_rmchs(host->resource, resourceSize, "\t\n", true);
+		host->resource[resourceSize] = '\0';
 	}
 }
 

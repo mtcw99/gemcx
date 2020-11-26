@@ -7,7 +7,9 @@
 struct gemcx_Config configGlobal = { 0 };
 
 static const char *const defStrs[GEMCX_CONFIG_STR__TOTAL] = {
-	[GEMCX_CONFIG_STR_STARTURL] = "gemini://gemini.circumlunar.space/",
+	//[GEMCX_CONFIG_STR_STARTURL] = "gemini://gemini.circumlunar.space/",
+	//[GEMCX_CONFIG_STR_STARTURL] = "gopher://gopher.quux.org:70/1/",
+	[GEMCX_CONFIG_STR_STARTURL] = "gopher://gopher.quux.org/",
 	[GEMCX_CONFIG_STR_FONT_TEXT] = "noto sans normal 12",
 	[GEMCX_CONFIG_STR_FONT_H1] = "noto sans bold 24",
 	[GEMCX_CONFIG_STR_FONT_H2] = "noto sans bold 18",

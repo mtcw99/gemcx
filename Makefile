@@ -19,6 +19,12 @@ src/protocol/gemini/xcb.c
 src/protocol/gopher/client.c
 src/protocol/gopher/parser.c
 src/protocol/gopher/xcb.c
+src/parser/generic.c
+src/parser/format/unknown.c
+src/parser/format/gemini.c
+src/parser/format/gopher.c
+src/parser/format/text.c
+src/parser/format/image.c
 src/ui/xcb/context.c
 src/ui/xcb/key.c
 src/ui/xcb/window.c

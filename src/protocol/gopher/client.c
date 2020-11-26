@@ -29,16 +29,15 @@ p_gopher_Client_request(struct protocol_Client *client,
 	char buffer[BUFFER_SIZE] = { 0 };
 	size_t bufSRLen = 0;
 
-#if 0
 	if (client->host.resource[1] != '\0' && client->host.resource[2] == '/')
 	{
 		sprintf(buffer, "%s\r\n", client->host.resource + 2);
 	}
 	else
-#endif
 	{
 		sprintf(buffer, "%s\r\n", client->host.resource);
 	}
+	//printf("Buffer send: %s\n", buffer);
 	bufSRLen = send(sockfd, buffer, BUFFER_SIZE, 0);
 	if (bufSRLen < 0)
 	{
@@ -65,6 +64,7 @@ p_gopher_Client_request(struct protocol_Client *client,
 		else
 		{
 			fprintf(fp, "%s", buffer);
+			//printf("BUFFER -> fp: %s\n", buffer);
 		}
 	}
 
