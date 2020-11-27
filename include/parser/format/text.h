@@ -5,9 +5,17 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+struct parser_format_Text_Line
+{
+	char *str;
+	uint32_t length;
+};
+
 struct parser_format_Text
 {
-
+	struct parser_format_Text_Line *text;
+	uint32_t length;
+	uint32_t alloc;
 };
 
 void parser_format_Text_init(void *genericFormat);

@@ -1,7 +1,7 @@
-#include "protocol/xcb.h"
+#include "render/xcb.h"
 
-#include "protocol/gemini/xcb.h"
-#include "protocol/gopher/xcb.h"
+#include "render/format/gemini/xcb.h"
+#include "render/format/gopher/xcb.h"
 
 #include "util/memory.h"
 
@@ -11,7 +11,7 @@ enum
 };
 
 void
-protocol_Xcb_init(struct protocol_Xcb *pgxcb,
+render_Xcb_init(struct render_Xcb *pgxcb,
 		struct ui_xcb_Context *context,
 		struct ui_xcb_Text *font,
 		const xcb_drawable_t drawable,
@@ -24,7 +24,7 @@ protocol_Xcb_init(struct protocol_Xcb *pgxcb,
 
 	ui_xcb_Pixmap_init(&pgxcb->pixmap, context, drawable, width, height,
 			backgroundColor);
-	protocol_Links_init(&pgxcb->links, context, pgxcb->font, backgroundColor);
+	render_Links_init(&pgxcb->links, context, pgxcb->font, backgroundColor);
 	pgxcb->offsetX = 0;
 	pgxcb->offsetY = 0;
 	pgxcb->hasItemsInit = false;
@@ -34,54 +34,54 @@ protocol_Xcb_init(struct protocol_Xcb *pgxcb,
 }
 
 void
-protocol_Xcb_deinit(struct protocol_Xcb *pgxcb)
+render_Xcb_deinit(struct render_Xcb *pgxcb)
 {
 	ui_xcb_Pixmap_deinit(&pgxcb->pixmap);
-	protocol_Links_deinit(&pgxcb->links);
+	render_Links_deinit(&pgxcb->links);
 	pgxcb->context = NULL;
 	pgxcb->font = NULL;
 	pgxcb->subwindow = NULL;
 }
 
 void
-protocol_Xcb_itemsInit(struct protocol_Xcb *pgxcb,
-		struct protocol_Parser *parser)
+render_Xcb_itemsInit(struct render_Xcb *pgxcb,
+		struct Parser *parser)
 {
 	if (pgxcb->hasItemsInit)
 	{
-		protocol_Links_clear(&pgxcb->links);
+		render_Links_clear(&pgxcb->links);
 	}
 
 	switch (parser->type)
 	{
-	case PROTOCOL_TYPE_GEMINI:
-		p_gemini_Xcb_itemsInit(pgxcb, &parser->protocol.gemini);
+	case PARSER_TYPE_GEMINI:
+		render_format_gemini_Xcb_itemsInit(pgxcb, &parser->format.gemini);
 		break;
-	case PROTOCOL_TYPE_GOPHER:
-		p_gopher_Xcb_itemsInit(pgxcb, &parser->protocol.gopher);
+	case PARSER_TYPE_GOPHER:
+		render_format_gopher_Xcb_itemsInit(pgxcb, &parser->format.gopher);
 		break;
 	default:
-		protocol_Type_assert(parser->type);
+		parser_Type_assert(parser->type);
 		return;
 	}
 	pgxcb->hasItemsInit = true;
 }
 
 uint32_t
-protocol_Xcb_render(struct protocol_Xcb *pgxcb,
-		const struct protocol_Parser *parser)
+render_Xcb_render(struct render_Xcb *pgxcb,
+		const struct Parser *parser)
 {
 	uint32_t retVal = 0;
 	switch (parser->type)
 	{
-	case PROTOCOL_TYPE_GEMINI:
-		retVal = p_gemini_Xcb_render(pgxcb, &parser->protocol.gemini, false);
+	case PARSER_TYPE_GEMINI:
+		retVal = render_format_gemini_Xcb_render(pgxcb, &parser->format.gemini, false);
 		break;
-	case PROTOCOL_TYPE_GOPHER:
-		retVal = p_gopher_Xcb_render(pgxcb, &parser->protocol.gopher, false);
+	case PARSER_TYPE_GOPHER:
+		retVal = render_format_gopher_Xcb_render(pgxcb, &parser->format.gopher, false);
 		break;
 	default:
-		protocol_Type_assert(parser->type);
+		parser_Type_assert(parser->type);
 		return 0;
 	}
 
@@ -90,26 +90,26 @@ protocol_Xcb_render(struct protocol_Xcb *pgxcb,
 }
 
 void
-protocol_Xcb_scroll(struct protocol_Xcb *pgxcb,
-		const struct protocol_Parser *parser)
+render_Xcb_scroll(struct render_Xcb *pgxcb,
+		const struct Parser *parser)
 {
 	switch (parser->type)
 	{
-	case PROTOCOL_TYPE_GEMINI:
-		p_gemini_Xcb_render(pgxcb, &parser->protocol.gemini, true);
+	case PARSER_TYPE_GEMINI:
+		render_format_gemini_Xcb_render(pgxcb, &parser->format.gemini, true);
 		break;
-	case PROTOCOL_TYPE_GOPHER:
-		p_gopher_Xcb_render(pgxcb, &parser->protocol.gopher, true);
+	case PARSER_TYPE_GOPHER:
+		render_format_gopher_Xcb_render(pgxcb, &parser->format.gopher, true);
 		break;
 	default:
-		protocol_Type_assert(parser->type);
+		parser_Type_assert(parser->type);
 		return;
 	}
 	ui_xcb_Pixmap_render(&pgxcb->pixmap, pgxcb->offsetX, pgxcb->offsetY);
 }
 
 void
-protocol_Xcb_offset(struct protocol_Xcb *pgxcb,
+render_Xcb_offset(struct render_Xcb *pgxcb,
 		const uint32_t offsetX, const uint32_t offsetY)
 {
 	pgxcb->offsetX = offsetX;
@@ -117,7 +117,7 @@ protocol_Xcb_offset(struct protocol_Xcb *pgxcb,
 }
 
 void
-protocol_Xcb_padding(struct protocol_Xcb *pgxcb,
+render_Xcb_padding(struct render_Xcb *pgxcb,
 		const uint32_t left, const uint32_t right)
 {
 	pgxcb->paddingLeft = left;
@@ -125,7 +125,7 @@ protocol_Xcb_padding(struct protocol_Xcb *pgxcb,
 }
 
 bool
-protocol_Xcb_hoverEnter(struct protocol_Xcb *pgxcb,
+render_Xcb_hoverEnter(struct render_Xcb *pgxcb,
 		const xcb_enter_notify_event_t *const restrict enterEv)
 {
 	if (pgxcb->subwindow->id == enterEv->event)
@@ -133,11 +133,11 @@ protocol_Xcb_hoverEnter(struct protocol_Xcb *pgxcb,
 		return true;
 	}
 
-	return protocol_Links_hoverEnter(&pgxcb->links, enterEv);
+	return render_Links_hoverEnter(&pgxcb->links, enterEv);
 }
 
 bool
-protocol_Xcb_hoverLeave(struct protocol_Xcb *pgxcb,
+render_Xcb_hoverLeave(struct render_Xcb *pgxcb,
 		const xcb_leave_notify_event_t *const restrict leaveEv)
 {
 	if (pgxcb->subwindow->id == leaveEv->event)
@@ -145,6 +145,6 @@ protocol_Xcb_hoverLeave(struct protocol_Xcb *pgxcb,
 		return true;
 	}
 
-	return protocol_Links_hoverLeave(&pgxcb->links, leaveEv);
+	return render_Links_hoverLeave(&pgxcb->links, leaveEv);
 }
 

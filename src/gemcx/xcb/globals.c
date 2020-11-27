@@ -7,6 +7,7 @@ struct gemcx_xcb_Globals globals = { 0 };
 void
 gemcx_xcb_Globals_init(void)
 {
+	Parser_init(&globals.parser);
 	gemcx_xcb_ConnectUrl_connect(&globals.client, &globals.parser,
 			configGlobal.str[GEMCX_CONFIG_STR_STARTURL]);
 	ui_xcb_Context_init(&globals.context);
@@ -70,13 +71,13 @@ gemcx_xcb_Globals_init(void)
 
 	ui_xcb_Key_init(&globals.xkey, globals.context.connection);
 
-	protocol_Xcb_init(&globals.pxcb, &globals.context,
+	render_Xcb_init(&globals.pxcb, &globals.context,
 			globals.text, globals.mainArea.pixmap,
 			&globals.contentSubWindow,
 			globals.context.rootWidth, 10080, 0x222222);
 
-	protocol_Xcb_itemsInit(&globals.pxcb, &globals.parser);
-	protocol_Xcb_padding(&globals.pxcb, 10, 10);
+	render_Xcb_itemsInit(&globals.pxcb, &globals.parser);
+	render_Xcb_padding(&globals.pxcb, 10, 10);
 
 	protocol_HistoryStack_init(&globals.historyStack);
 	protocol_HistoryStack_push(&globals.historyStack, globals.urlStr);
@@ -97,7 +98,7 @@ gemcx_xcb_Globals_deinit(void)
 {
 	protocol_HistoryStack_deinit(&globals.historyStack);
 
-	protocol_Xcb_deinit(&globals.pxcb);
+	render_Xcb_deinit(&globals.pxcb);
 	gemcx_xcb_ControlBar_deinit(&globals.controlBar);
 
 	// xcb deinit
@@ -117,6 +118,6 @@ gemcx_xcb_Globals_deinit(void)
 	ui_xcb_Text_GDEINIT();
 
 	// protocols deinit
-	protocol_Parser_deinit(&globals.parser);
+	Parser_deinit(&globals.parser);
 }
 

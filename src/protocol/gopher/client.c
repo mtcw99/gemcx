@@ -51,6 +51,7 @@ p_gopher_Client_request(struct protocol_Client *client,
 	{
 		memset(&buffer, 0, BUFFER_SIZE);
 		bufSRLen = recv(sockfd, buffer, BUFFER_SIZE, 0);
+		buffer[bufSRLen] = '\0';
 		if (bufSRLen < 0)
 		{
 			perror("Receiving error");

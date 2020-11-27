@@ -2,11 +2,11 @@
 #define GEMCX_XCB_GLOBALS_H
 
 #include "protocol/client.h"
-#include "protocol/parser.h"
-#include "protocol/xcb.h"
 #include "protocol/historyStack.h"
-
 #include "protocol/gemini/header.h"
+
+#include "parser/generic.h"
+#include "render/xcb.h"
 
 #include "ui/xcb/context.h"
 #include "ui/xcb/key.h"
@@ -28,7 +28,7 @@
 struct gemcx_xcb_Globals
 {
 	struct protocol_Client client;
-	struct protocol_Parser parser;
+	struct Parser parser;
 	struct ui_xcb_Context context;
 	struct ui_xcb_Clipboard clipboard;
 	struct ui_xcb_Window window;
@@ -43,7 +43,7 @@ struct gemcx_xcb_Globals
 	int32_t mainAreaYoffset;
 	uint32_t mainAreaYMax;
 	struct ui_xcb_Key xkey;
-	struct protocol_Xcb pxcb;
+	struct render_Xcb pxcb;
 	struct protocol_HistoryStack historyStack;
 	struct gemcx_xcb_ConnectUrl connectUrl;
 };

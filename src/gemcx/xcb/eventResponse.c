@@ -84,8 +84,8 @@ gemcx_xcb_EventResponse__configureNotify(const xcb_generic_event_t *genericEvent
 
 	if (prevWidth != cnEvent->width)
 	{
-		protocol_Xcb_offset(&globals.pxcb, 0, -globals.mainAreaYoffset);
-		globals.mainAreaYMax = protocol_Xcb_render(&globals.pxcb,
+		render_Xcb_offset(&globals.pxcb, 0, -globals.mainAreaYoffset);
+		globals.mainAreaYMax = render_Xcb_render(&globals.pxcb,
 				&globals.parser);
 		ui_xcb_Pixmap_render(&globals.mainArea, 0, 0);
 		ui_xcb_Pixmap_render(&globals.doubleBuffer, 0, 0);
@@ -124,7 +124,7 @@ gemcx_xcb_EventResponse__enterNotify(const xcb_generic_event_t *genericEvent)
 	if (gemcx_xcb_ControlBar_enterNotify(&globals.controlBar, enterEv))
 	{
 	}
-	else if (protocol_Xcb_hoverEnter(&globals.pxcb, enterEv))
+	else if (render_Xcb_hoverEnter(&globals.pxcb, enterEv))
 	{
 	}
 }
@@ -136,7 +136,7 @@ gemcx_xcb_EventResponse__leaveNotify(const xcb_generic_event_t *genericEvent)
 	if (gemcx_xcb_ControlBar_leaveNotify(&globals.controlBar, leaveEv))
 	{
 	}
-	else if (protocol_Xcb_hoverLeave(&globals.pxcb, leaveEv))
+	else if (render_Xcb_hoverLeave(&globals.pxcb, leaveEv))
 	{
 	}
 }
@@ -171,9 +171,9 @@ gemcx_xcb_EventResponse__buttonPress(const xcb_generic_event_t *genericEvent)
 
 		for (uint32_t i = 0; i < globals.pxcb.links.length; ++i)
 		{
-			if (protocol_Links_clicked(&globals.pxcb.links, i, bp->event))
+			if (render_Links_clicked(&globals.pxcb.links, i, bp->event))
 			{
-				const struct protocol_Link *link = &globals.pxcb.links.links[i];
+				const struct render_Link *link = &globals.pxcb.links.links[i];
 				printf("%d: ref: %s\n", i, link->ref);
 				if (util_socket_urlHasScheme(link->ref, strlen(link->ref)))
 				{
@@ -228,13 +228,13 @@ gemcx_xcb_EventResponse__buttonPress(const xcb_generic_event_t *genericEvent)
 	{
 	case 4:
 	case 5:
-		protocol_Xcb_offset(&globals.pxcb, 0, -globals.mainAreaYoffset);
-		protocol_Xcb_scroll(&globals.pxcb, &globals.parser);
+		render_Xcb_offset(&globals.pxcb, 0, -globals.mainAreaYoffset);
+		render_Xcb_scroll(&globals.pxcb, &globals.parser);
 		if (bp->detail == 4)
 		{
 			// Rerender buttons: scroll up apparently
 			// breaks rendering but not down
-			protocol_Xcb_scroll(&globals.pxcb, &globals.parser);
+			render_Xcb_scroll(&globals.pxcb, &globals.parser);
 		}
 
 		ui_xcb_Pixmap_render(&globals.mainArea, 0, 0);
@@ -323,14 +323,14 @@ gemcx_xcb_EventResponse__keyPress(const xcb_generic_event_t *genericEvent)
 	case XKB_KEY_Page_Up:
 	case XKB_KEY_Down:
 	case XKB_KEY_Page_Down:
-		protocol_Xcb_offset(&globals.pxcb, 0, -globals.mainAreaYoffset);
-		protocol_Xcb_scroll(&globals.pxcb, &globals.parser);
+		render_Xcb_offset(&globals.pxcb, 0, -globals.mainAreaYoffset);
+		render_Xcb_scroll(&globals.pxcb, &globals.parser);
 		if (globals.xkey.keysymNoMask == XKB_KEY_Down ||
 				globals.xkey.keysymNoMask == XKB_KEY_Page_Down)
 		{
 			// Rerender buttons: scroll up apparently
 			// breaks rendering but not down
-			protocol_Xcb_scroll(&globals.pxcb, &globals.parser);
+			render_Xcb_scroll(&globals.pxcb, &globals.parser);
 		}
 
 		ui_xcb_Pixmap_render(&globals.mainArea, 0, 0);

@@ -6,25 +6,22 @@ endef
 
 define SRC
 src/main.c
-src/protocol/parser.c
-src/protocol/xcb.c
 src/protocol/client.c
-src/protocol/links.c
 src/protocol/historyStack.c
 src/protocol/header.c
 src/protocol/gemini/client.c
 src/protocol/gemini/header.c
-src/protocol/gemini/parser.c
-src/protocol/gemini/xcb.c
 src/protocol/gopher/client.c
-src/protocol/gopher/parser.c
-src/protocol/gopher/xcb.c
 src/parser/generic.c
 src/parser/format/unknown.c
 src/parser/format/gemini.c
 src/parser/format/gopher.c
 src/parser/format/text.c
 src/parser/format/image.c
+src/render/xcb.c
+src/render/links.c
+src/render/format/gemini/xcb.c
+src/render/format/gopher/xcb.c
 src/ui/xcb/context.c
 src/ui/xcb/key.c
 src/ui/xcb/window.c

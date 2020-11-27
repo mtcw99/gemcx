@@ -66,7 +66,6 @@ parser_format_Gopher__line(struct parser_format_Gopher_Line *line,
 	{
 		uint32_t prevTab = 0;
 
-#if 1
 		nextTab = parser_format_Gopher__lineNextTab(str, strSize, 0);
 		strncpy(line->info, str + 1, nextTab);
 		prevTab = nextTab;
@@ -80,7 +79,6 @@ parser_format_Gopher__line(struct parser_format_Gopher_Line *line,
 		prevTab = nextTab;
 
 		strncpy(line->port, str + prevTab + 1, strSize - prevTab - 1);
-#endif
 	}	break;
 	case 'i':	// Informational message
 		nextTab = parser_format_Gopher__lineNextTab(str, strSize, 0);
@@ -126,14 +124,6 @@ parser_format_Gopher_parseFp(void *genericFormat, FILE *fp)
 	rewind(fp);
 	char line[1024] = { 0 };
 
-#if 0
-	if (hasHeader)
-#endif
-	{
-		fgets(line, sizeof(line), fp);
-		strcpy(parser->header, line);
-	}
-
 	while (fgets(line, 1024, fp) != NULL)
 	{
 		parser_format_Gopher__expand(parser);
@@ -141,15 +131,17 @@ parser_format_Gopher_parseFp(void *genericFormat, FILE *fp)
 				line,
 				strlen(line));
 	}
+	return 0;
 }
 
 int32_t
 parser_format_Gopher_parse(void *genericFormat, const char *filePath)
 {
 	FILE *fp = fopen(filePath, "r");
-	parser_format_Gopher_parseFp(genericFormat, fp);
+	const int32_t retVal = parser_format_Gopher_parseFp(genericFormat, fp);
 	fclose(fp);
 	fp = NULL;
+	return retVal;
 }
 
 void

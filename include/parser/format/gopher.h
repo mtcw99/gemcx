@@ -21,7 +21,6 @@ struct parser_format_Gopher
 	struct parser_format_Gopher_Line *array;
 	uint32_t			length;
 	uint32_t			alloc;
-	char 				header[128];
 };
 
 void parser_format_Gopher_init(void *genericFormat);

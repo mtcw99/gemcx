@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <assert.h>
 
 #include "parser/format/unknown.h"
 #include "parser/format/gemini.h"
@@ -21,6 +22,8 @@ enum parser_Type
 
 	PARSER_TYPE__TOTAL
 };
+
+#define parser_Type_assert(t) assert(t >= 0 && t < PARSER_TYPE__TOTAL)
 
 struct Parser
 {

@@ -7,7 +7,7 @@
 
 struct parser_format_Unknown
 {
-
+	uint8_t errCode;
 };
 
 void parser_format_Unknown_init(void *genericFormat);

@@ -59,6 +59,7 @@ Parser_init(struct Parser *parser)
 
 	for (uint32_t i = 0; i < PARSER_TYPE__TOTAL; ++i)
 	{
+		printf("Parser_init: %d ptr: %p\n", i, parser->formatList[i]);
 		defFuncs[i].init(parser->formatList[i]);
 	}
 }
@@ -68,7 +69,7 @@ Parser_deinit(struct Parser *parser)
 {
 	for (uint32_t i = 0; i < PARSER_TYPE__TOTAL; ++i)
 	{
-		defFuncs[i].init(parser->formatList[i]);
+		defFuncs[i].deinit(parser->formatList[i]);
 	}
 }
 
@@ -79,6 +80,7 @@ Parser_setType(struct Parser *const restrict parser,
 	parser->type = type;
 	parser->func = defFuncs[parser->type];
 	parser->focusFormat = parser->formatList[parser->type];
+	printf("Parser_setType: %d: %p\n", parser->type, parser->focusFormat);
 }
 
 int32_t

@@ -7,7 +7,7 @@
 
 struct parser_format_Image
 {
-
+	char fileName[1024];
 };
 
 void parser_format_Image_init(void *genericFormat);

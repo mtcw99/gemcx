@@ -1,10 +1,10 @@
-#include "protocol/gopher/xcb.h"
+#include "render/format/gopher/xcb.h"
 
 #include "util/memory.h"
 
 uint32_t
-p_gopher_Xcb_render(struct protocol_Xcb *pgxcb,
-		const struct p_gopher_Parser *parser,
+render_format_gopher_Xcb_render(struct render_Xcb *pgxcb,
+		const struct parser_format_Gopher *parser,
 		const bool scroll)
 {
 	static const uint32_t yChange = 20;
@@ -17,7 +17,7 @@ p_gopher_Xcb_render(struct protocol_Xcb *pgxcb,
 	uint32_t pY = 10;
 	for (uint32_t i = 0; i < parser->length; ++i, pY += yChange)
 	{
-		const struct p_gopher_Parser_Line *line = &parser->array[i];
+		const struct parser_format_Gopher_Line *line = &parser->array[i];
 
 		switch (line->type)
 		{
@@ -59,7 +59,7 @@ p_gopher_Xcb_render(struct protocol_Xcb *pgxcb,
 						pX, pY, 0xFFFFFF, 1.0);
 			}
 
-			protocol_Links_render(&pgxcb->links,
+			render_Links_render(&pgxcb->links,
 					line->xcbButtonIndex,
 					osetPX, osetPY,
 					pgxcb->subwindow->rect.width,
@@ -76,12 +76,12 @@ p_gopher_Xcb_render(struct protocol_Xcb *pgxcb,
 }
 
 void
-p_gopher_Xcb_itemsInit(struct protocol_Xcb *pgxcb,
-		struct p_gopher_Parser *parser)
+render_format_gopher_Xcb_itemsInit(struct render_Xcb *pgxcb,
+		struct parser_format_Gopher *parser)
 {
 	for (uint32_t i = 0; i < parser->length; ++i)
 	{
-		struct p_gopher_Parser_Line *line = &parser->array[i];
+		struct parser_format_Gopher_Line *line = &parser->array[i];
 		switch (line->type)
 		{
 		case '0':	// Text file
@@ -100,7 +100,7 @@ p_gopher_Xcb_itemsInit(struct protocol_Xcb *pgxcb,
 			printf("info: %s\tselector: %s\tparentWindow: %d\n",
 					line->info, line->selector, pgxcb->parentWindow);
 #endif
-			line->xcbButtonIndex = protocol_Links_new(&pgxcb->links,
+			line->xcbButtonIndex = render_Links_new(&pgxcb->links,
 					line->info, line->selector,
 					pgxcb->subwindow->id);
 			break;

@@ -1,4 +1,4 @@
-#include "protocol/links.h"
+#include "render/links.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,7 +14,7 @@ enum
 };
 
 void
-protocol_Links_init(struct protocol_Links *links,
+render_Links_init(struct render_Links *links,
 		struct ui_xcb_Context *context,
 		struct ui_xcb_Text *font,
 		const uint32_t backgroundColor)
@@ -30,13 +30,13 @@ protocol_Links_init(struct protocol_Links *links,
 }
 
 void
-protocol_Links_deinit(struct protocol_Links *links)
+render_Links_deinit(struct render_Links *links)
 {
 	if (links->links != NULL)
 	{
 		for (uint32_t i = 0; i < links->length; ++i)
 		{
-			struct protocol_Link *link = &links->links[i];
+			struct render_Link *link = &links->links[i];
 			ui_xcb_Button_deinit(&link->button);
 			util_memory_free(link->str);
 			util_memory_free(link->ref);
@@ -49,39 +49,39 @@ protocol_Links_deinit(struct protocol_Links *links)
 }
 
 void
-protocol_Links_clear(struct protocol_Links *links)
+render_Links_clear(struct render_Links *links)
 {
-	protocol_Links_deinit(links);
+	render_Links_deinit(links);
 }
 
 static void
-protocol_Links__expand(struct protocol_Links *links)
+render_Links__expand(struct render_Links *links)
 {
 	if (links->links == NULL)
 	{
 		links->allocate = PROTOCOL_LINK_ALLOC;
 		links->links = util_memory_calloc(
-				sizeof(struct protocol_Link), links->allocate);
+				sizeof(struct render_Link), links->allocate);
 		links->length = 0;
 	}
 	else if (links->allocate >= (links->length - 1))
 	{
 		links->allocate += PROTOCOL_LINK_ALLOC;
 		links->links = util_memory_realloc(links->links,
-				sizeof(struct protocol_Link) * links->allocate);
+				sizeof(struct render_Link) * links->allocate);
 	}
 }
 
 uint32_t
-protocol_Links_new(struct protocol_Links *links,
+render_Links_new(struct render_Links *links,
 		const char *str,
 		const char *ref,
 		const xcb_window_t parentWindow)
 {
-	protocol_Links__expand(links);
+	render_Links__expand(links);
 
 	const uint32_t index = links->length++;
-	struct protocol_Link *link = &links->links[index];
+	struct render_Link *link = &links->links[index];
 	const uint32_t strSize = strlen(str);
 
 	if ((strlen(ref) > 7) && (!strncmp(ref, "http://", 7) ||
@@ -131,7 +131,7 @@ protocol_Links_new(struct protocol_Links *links,
 }
 
 bool
-protocol_Links_clicked(struct protocol_Links *links,
+render_Links_clicked(struct render_Links *links,
 		const uint32_t index,
 		const xcb_window_t eventWindow)
 {
@@ -140,12 +140,12 @@ protocol_Links_clicked(struct protocol_Links *links,
 }
 
 void
-protocol_Links_render(struct protocol_Links *links,
+render_Links_render(struct render_Links *links,
 		const uint32_t index,
 		const int16_t x, const int16_t y,
 		const uint32_t width, const uint32_t height)
 {
-	struct protocol_Link *link = &links->links[index];
+	struct render_Link *link = &links->links[index];
 	if ((x > 0) && (y > 0) && (x < width) && (y < height))
 	{
 		//printf("SHOW: %d %d %d\n", index, x, y);
@@ -160,7 +160,7 @@ protocol_Links_render(struct protocol_Links *links,
 }
 
 bool
-protocol_Links_hoverEnter(struct protocol_Links *links,
+render_Links_hoverEnter(struct render_Links *links,
 		const xcb_enter_notify_event_t *const restrict enterEv)
 {
 	for (uint32_t i = 0; i < links->length; ++i)
@@ -174,7 +174,7 @@ protocol_Links_hoverEnter(struct protocol_Links *links,
 }
 
 bool
-protocol_Links_hoverLeave(struct protocol_Links *links,
+render_Links_hoverLeave(struct render_Links *links,
 		const xcb_leave_notify_event_t *const restrict leaveEv)
 {
 	for (uint32_t i = 0; i < links->length; ++i)

@@ -5,7 +5,7 @@
 
 int32_t
 gemcx_xcb_ConnectUrl_connect(struct protocol_Client *const restrict client,
-		struct protocol_Parser *const restrict parser,
+		struct Parser *const restrict parser,
 		const char *const restrict url)
 {
 	static bool parserHasInit = false;
@@ -20,12 +20,12 @@ gemcx_xcb_ConnectUrl_connect(struct protocol_Client *const restrict client,
 		if (!strncmp(url + urlLen - 3, "gmi", 3) ||
 				!strncmp(url + urlLen - 6, "gemini", 6))
 		{
-			protocol_Parser_setType(parser, PROTOCOL_TYPE_GEMINI);
+			Parser_setType(parser, PARSER_TYPE_GEMINI);
 			printf("File type: gemini\n");
 		}
 		else if (!strncmp(url + urlLen - 6, "gopher", 6))
 		{
-			protocol_Parser_setType(parser, PROTOCOL_TYPE_GOPHER);
+			Parser_setType(parser, PARSER_TYPE_GOPHER);
 			printf("File type: gopher\n");
 		}
 		else
@@ -40,7 +40,10 @@ gemcx_xcb_ConnectUrl_connect(struct protocol_Client *const restrict client,
 		if (!strcmp(client->host.scheme, "gemini") ||
 				!strcmp(client->host.scheme, "gopher"))
 		{
-			protocol_Parser_setType(parser, client->type);
+			Parser_setType(parser,
+					(client->type == PROTOCOL_TYPE_GEMINI) ? PARSER_TYPE_GEMINI :
+					(client->type == PROTOCOL_TYPE_GOPHER) ? PARSER_TYPE_GOPHER :
+					PARSER_TYPE_UNKNOWN);
 		}
 		else if (!strcmp(client->host.scheme, "http") ||
 				!strcmp(client->host.scheme, "https"))
@@ -67,14 +70,14 @@ gemcx_xcb_ConnectUrl_connect(struct protocol_Client *const restrict client,
 
 	if (parserHasInit)
 	{
-		protocol_Parser_deinit(parser);
+		Parser_deinit(parser);
 	}
-	protocol_Parser_init(parser);
+	Parser_init(parser);
 	parserHasInit = true;
 
 	if (client->type == PROTOCOL_TYPE_FILE)
 	{
-		protocol_Parser_parse(parser, url + strlen("file://"));
+		Parser_parse(parser, url + strlen("file://"));
 	}
 	else
 	{
@@ -90,7 +93,7 @@ gemcx_xcb_ConnectUrl_connect(struct protocol_Client *const restrict client,
 			return -3;
 		}
 
-		if (parser->type == PROTOCOL_TYPE_GEMINI)
+		if (parser->type == PARSER_TYPE_GEMINI)
 		{
 			char line[1024] = { 0 };
 			rewind(reqFp);
@@ -128,7 +131,7 @@ gemcx_xcb_ConnectUrl_connect(struct protocol_Client *const restrict client,
 				break;
 			}
 		}
-		protocol_Parser_parseFp(parser, reqFp, false);
+		Parser_parseFp(parser, reqFp, false);
 
 		fclose(reqFp);
 		reqFp = NULL;
@@ -156,11 +159,11 @@ gemcx_xcb_ConnectUrl_connectRender(struct gemcx_xcb_ConnectUrl *connectUrl,
 
 	strcpy(urlStr, protocol_Client_constructUrl(connectUrl->client));
 	ui_xcb_TextInput_textReRender(connectUrl->urlInput);
-	protocol_Xcb_itemsInit(connectUrl->pxcb, connectUrl->parser);
+	render_Xcb_itemsInit(connectUrl->pxcb, connectUrl->parser);
 
 	*connectUrl->mainAreaYoffset = 0;
-	protocol_Xcb_offset(connectUrl->pxcb, 0, -*connectUrl->mainAreaYoffset);
-	*connectUrl->mainAreaYMax = protocol_Xcb_render(connectUrl->pxcb,
+	render_Xcb_offset(connectUrl->pxcb, 0, -*connectUrl->mainAreaYoffset);
+	*connectUrl->mainAreaYMax = render_Xcb_render(connectUrl->pxcb,
 			connectUrl->parser);
 	ui_xcb_Pixmap_render(connectUrl->mainArea, 0, 0);
 	ui_xcb_Pixmap_render(connectUrl->doubleBuffer, 0, 0);
