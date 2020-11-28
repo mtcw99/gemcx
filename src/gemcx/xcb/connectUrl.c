@@ -9,11 +9,12 @@ gemcx_xcb_ConnectUrl_connect(struct protocol_Client *const restrict client,
 		struct Parser *const restrict parser,
 		const char *const restrict ncUrl)
 {
-	static bool parserHasInit = false;
 	char url[1024] = { 0 };
 	strcpy(url, ncUrl);
 	util_ex_rmchs(url, strlen(ncUrl), "\t\n", true);
 	printf("Connecting: '%s'\n", url);
+
+	Parser_reinit(parser);
 
 	const uint32_t urlLen = strlen(url);
 	struct protocol_Client tmpClient = *client;
@@ -92,13 +93,6 @@ gemcx_xcb_ConnectUrl_connect(struct protocol_Client *const restrict client,
 			return -2;
 		}
 	}
-
-	if (parserHasInit)
-	{
-		Parser_deinit(parser);
-	}
-	Parser_init(parser);
-	parserHasInit = true;
 
 	if (client->type == PROTOCOL_TYPE_FILE)
 	{

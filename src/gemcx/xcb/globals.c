@@ -115,9 +115,8 @@ gemcx_xcb_Globals_deinit(void)
 	ui_xcb_Clipboard_deinit(&globals.clipboard);
 	ui_xcb_Context_deinit(&globals.context);
 
-	ui_xcb_Text_GDEINIT();
-
-	// protocols deinit
 	Parser_deinit(&globals.parser);
+
+	ui_xcb_Text_GDEINIT();
 }
 

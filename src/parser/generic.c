@@ -59,7 +59,9 @@ Parser_init(struct Parser *parser)
 
 	for (uint32_t i = 0; i < PARSER_TYPE__TOTAL; ++i)
 	{
+#ifdef DEBUG
 		printf("Parser_init: %d ptr: %p\n", i, parser->formatList[i]);
+#endif
 		defFuncs[i].init(parser->formatList[i]);
 	}
 }
@@ -74,13 +76,25 @@ Parser_deinit(struct Parser *parser)
 }
 
 void
+Parser_reinit(struct Parser *parser)
+{
+	for (uint32_t i = 0; i < PARSER_TYPE__TOTAL; ++i)
+	{
+		defFuncs[i].deinit(parser->formatList[i]);
+		defFuncs[i].init(parser->formatList[i]);
+	}
+}
+
+void
 Parser_setType(struct Parser *const restrict parser,
 		const enum parser_Type type)
 {
 	parser->type = type;
 	parser->func = defFuncs[parser->type];
 	parser->focusFormat = parser->formatList[parser->type];
+#ifdef DEBUG
 	printf("Parser_setType: %d: %p\n", parser->type, parser->focusFormat);
+#endif
 }
 
 int32_t

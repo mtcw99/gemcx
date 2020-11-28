@@ -55,6 +55,7 @@ struct Parser
 
 void Parser_init(struct Parser *parser);
 void Parser_deinit(struct Parser *parser);
+void Parser_reinit(struct Parser *parser);
 
 void Parser_setType(struct Parser *const restrict parser,
 		const enum parser_Type type);
