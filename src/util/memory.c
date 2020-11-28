@@ -78,6 +78,7 @@ util_memory__getIndex(void *ptr, bool *found)
 	return 0;
 }
 
+__attribute__((warn_unused_result))
 void *
 util_memory_alloc(size_t size)
 {
@@ -86,6 +87,7 @@ util_memory_alloc(size_t size)
 	return ptr;
 }
 
+__attribute__((warn_unused_result))
 void *
 util_memory_calloc(size_t nmemb, size_t size)
 {
@@ -94,6 +96,7 @@ util_memory_calloc(size_t nmemb, size_t size)
 	return ptr;
 }
 
+__attribute__((warn_unused_result))
 void *
 util_memory_realloc(void *ptr, size_t size)
 {

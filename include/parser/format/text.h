@@ -13,7 +13,7 @@ struct parser_format_Text_Line
 
 struct parser_format_Text
 {
-	struct parser_format_Text_Line *text;
+	struct parser_format_Text_Line *array;
 	uint32_t length;
 	uint32_t alloc;
 };

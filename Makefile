@@ -22,6 +22,7 @@ src/render/xcb.c
 src/render/links.c
 src/render/format/gemini/xcb.c
 src/render/format/gopher/xcb.c
+src/render/format/text/xcb.c
 src/ui/xcb/context.c
 src/ui/xcb/key.c
 src/ui/xcb/window.c

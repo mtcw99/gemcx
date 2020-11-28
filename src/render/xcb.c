@@ -2,6 +2,7 @@
 
 #include "render/format/gemini/xcb.h"
 #include "render/format/gopher/xcb.h"
+#include "render/format/text/xcb.h"
 
 #include "util/memory.h"
 
@@ -80,6 +81,9 @@ render_Xcb_render(struct render_Xcb *pgxcb,
 	case PARSER_TYPE_GOPHER:
 		retVal = render_format_gopher_Xcb_render(pgxcb, &parser->format.gopher, false);
 		break;
+	case PARSER_TYPE_TEXT:
+		retVal = render_format_text_Xcb_render(pgxcb, &parser->format.text, false);
+		break;
 	default:
 		parser_Type_assert(parser->type);
 		return 0;
@@ -100,6 +104,8 @@ render_Xcb_scroll(struct render_Xcb *pgxcb,
 		break;
 	case PARSER_TYPE_GOPHER:
 		render_format_gopher_Xcb_render(pgxcb, &parser->format.gopher, true);
+		break;
+	case PARSER_TYPE_TEXT:
 		break;
 	default:
 		parser_Type_assert(parser->type);

@@ -2,21 +2,24 @@
 
 #include "protocol/header.h"
 #include "gemcx/config.h"
+#include "util/ex.h"
 
 int32_t
 gemcx_xcb_ConnectUrl_connect(struct protocol_Client *const restrict client,
 		struct Parser *const restrict parser,
-		const char *const restrict url)
+		const char *const restrict ncUrl)
 {
 	static bool parserHasInit = false;
+	char url[1024] = { 0 };
+	strcpy(url, ncUrl);
+	util_ex_rmchs(url, strlen(ncUrl), "\t\n", true);
 	printf("Connecting: '%s'\n", url);
 
+	const uint32_t urlLen = strlen(url);
 	struct protocol_Client tmpClient = *client;
 	protocol_Client_newUrl(client, url);
 	if (client->type == PROTOCOL_TYPE_FILE)
 	{
-		const uint32_t urlLen = strlen(url);
-
 		if (!strncmp(url + urlLen - 3, "gmi", 3) ||
 				!strncmp(url + urlLen - 6, "gemini", 6))
 		{
@@ -40,10 +43,18 @@ gemcx_xcb_ConnectUrl_connect(struct protocol_Client *const restrict client,
 		if (!strcmp(client->host.scheme, "gemini") ||
 				!strcmp(client->host.scheme, "gopher"))
 		{
-			Parser_setType(parser,
-					(client->type == PROTOCOL_TYPE_GEMINI) ? PARSER_TYPE_GEMINI :
-					(client->type == PROTOCOL_TYPE_GOPHER) ? PARSER_TYPE_GOPHER :
-					PARSER_TYPE_UNKNOWN);
+			if (!strncmp(url + urlLen - 4, ".txt", 4))
+			{
+				printf("Set type text\n");
+				Parser_setType(parser, PARSER_TYPE_TEXT);
+			}
+			else
+			{
+				Parser_setType(parser,
+						(client->type == PROTOCOL_TYPE_GEMINI) ? PARSER_TYPE_GEMINI :
+						(client->type == PROTOCOL_TYPE_GOPHER) ? PARSER_TYPE_GOPHER :
+						PARSER_TYPE_UNKNOWN);
+			}
 		}
 		else if (!strcmp(client->host.scheme, "http") ||
 				!strcmp(client->host.scheme, "https"))
