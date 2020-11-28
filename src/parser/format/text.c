@@ -36,6 +36,7 @@ parser_format_Text_init(void *genericFormat)
 	fText->array = NULL;
 	fText->length = 0;
 	fText->alloc = 0;
+	fText->rendered = false;
 }
 
 void
@@ -55,6 +56,7 @@ parser_format_Text_deinit(void *genericFormat)
 	}
 	fText->length = 0;
 	fText->alloc = 0;
+	fText->rendered = false;
 }
 
 static inline void
@@ -104,6 +106,7 @@ parser_format_Text_parseFp(void *genericFormat, FILE *fp)
 	}
 
 	util_memory_free(bigLine);
+	fText->rendered = false;
 	return 0;
 }
 

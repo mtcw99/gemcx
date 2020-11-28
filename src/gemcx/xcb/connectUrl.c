@@ -40,8 +40,7 @@ gemcx_xcb_ConnectUrl_connect(struct protocol_Client *const restrict client,
 	}
 	else
 	{
-		if (!strcmp(client->host.scheme, "gemini") ||
-				!strcmp(client->host.scheme, "gopher"))
+		if (!strcmp(client->host.scheme, "gemini"))
 		{
 			if (!strncmp(url + urlLen - 4, ".txt", 4))
 			{
@@ -50,10 +49,25 @@ gemcx_xcb_ConnectUrl_connect(struct protocol_Client *const restrict client,
 			}
 			else
 			{
-				Parser_setType(parser,
-						(client->type == PROTOCOL_TYPE_GEMINI) ? PARSER_TYPE_GEMINI :
-						(client->type == PROTOCOL_TYPE_GOPHER) ? PARSER_TYPE_GOPHER :
-						PARSER_TYPE_UNKNOWN);
+				Parser_setType(parser, PARSER_TYPE_GEMINI);
+			}
+		}
+		else if (!strcmp(client->host.scheme, "gopher"))
+		{
+			char type = client->host.resource[1];
+			switch (type)
+			{
+			case '0':
+				Parser_setType(parser, PARSER_TYPE_TEXT);
+				break;
+			case '1':
+			case '\0':
+				Parser_setType(parser, PARSER_TYPE_GOPHER);
+				break;
+			default:
+				Parser_setType(parser, PARSER_TYPE_UNKNOWN);
+				fprintf(stderr, "ERROR: Unknown type!\n");
+				break;
 			}
 		}
 		else if (!strcmp(client->host.scheme, "http") ||

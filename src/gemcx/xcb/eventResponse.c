@@ -181,10 +181,9 @@ gemcx_xcb_EventResponse__buttonPress(const xcb_generic_event_t *genericEvent)
 				}
 				else if (link->ref[0] == '/')
 				{
-					sprintf(globals.urlStr, "%s://%s%s%s",
+					sprintf(globals.urlStr, "%s://%s%s",
 							globals.client.host.scheme,
 							globals.client.host.hostname,
-							(globals.client.type == PROTOCOL_TYPE_GOPHER) ? "/1" : "",
 							firstNonWhiteSpace(link->ref));
 				}
 				else

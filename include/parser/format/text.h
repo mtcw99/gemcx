@@ -16,6 +16,8 @@ struct parser_format_Text
 	struct parser_format_Text_Line *array;
 	uint32_t length;
 	uint32_t alloc;
+
+	bool rendered;
 };
 
 void parser_format_Text_init(void *genericFormat);

@@ -71,7 +71,9 @@ parser_format_Gopher__line(struct parser_format_Gopher_Line *line,
 		prevTab = nextTab;
 
 		nextTab = parser_format_Gopher__lineNextTab(str, strSize, nextTab + 1);
-		strncpy(line->selector, str + prevTab + 1, nextTab - prevTab);
+		char selectorTmp[512] = { 0 };
+		strncpy(selectorTmp, str + prevTab + 1, nextTab - prevTab);
+		sprintf(line->selector, "/%c%s", line->type, selectorTmp);
 		prevTab = nextTab;
 
 		nextTab = parser_format_Gopher__lineNextTab(str, strSize, nextTab + 1);
