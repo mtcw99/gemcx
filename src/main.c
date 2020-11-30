@@ -2,6 +2,18 @@
 
 #include "util/memory.h"
 
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#define STB_IMAGE_IMPLEMENTATION
+#define STBI_NO_PSD
+#define STBI_NO_TGA
+#define STBI_NO_PIC
+#define STBI_NO_PNM
+#include "stb_image.h"
+
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
+#include "stb_image_resize.h"
+#pragma GCC diagnostic pop
+
 #include "gemcx/xcb/controlBar.h"
 #include "gemcx/xcb/connectUrl.h"
 #include "gemcx/xcb/globals.h"

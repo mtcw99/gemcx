@@ -113,10 +113,34 @@ util_memory_realloc(void *ptr, size_t size)
 void
 util_memory_free(void *ptr)
 {
+	if (ptr == NULL)
+	{
+		return;
+	}
+
 	bool found = false;
 	const uint64_t index = util_memory__getIndex(ptr, &found);
+	//printf("ptr: %p | index: %ld\n", ptr, index);
 	free(ptr);
 	ptr = NULL;
+	if (found)
+	{
+		mems.total -= mems.allocSize[index];
+		mems.allocSize[index] = 0;
+		mems.ptrs[index] = NULL;
+	}
+}
+
+void
+util_memory_markAsFree(void *ptr)
+{
+	if (ptr == NULL)
+	{
+		return;
+	}
+
+	bool found = false;
+	const uint64_t index = util_memory__getIndex(ptr, &found);
 	if (found)
 	{
 		mems.total -= mems.allocSize[index];

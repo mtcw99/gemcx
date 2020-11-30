@@ -21,6 +21,7 @@
 #include "ui/xcb/textInput.h"
 #include "ui/xcb/clipboard.h"
 #include "ui/xcb/menu.h"
+#include "ui/xcb/image.h"
 
 #include "gemcx/xcb/controlBar.h"
 #include "gemcx/xcb/connectUrl.h"
@@ -46,6 +47,8 @@ struct gemcx_xcb_Globals
 	struct render_Xcb pxcb;
 	struct protocol_HistoryStack historyStack;
 	struct gemcx_xcb_ConnectUrl connectUrl;
+
+	struct ui_xcb_Image sampleImage;
 };
 
 extern struct gemcx_xcb_Globals globals;

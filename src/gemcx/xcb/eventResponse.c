@@ -347,6 +347,20 @@ gemcx_xcb_EventResponse__keyRelease(const xcb_generic_event_t *genericEvent)
 	ui_xcb_Key_set(&globals.xkey, reEv->detail, reEv->state);
 }
 
+static void
+gemcx_xcb_EventResponse__motionNotify(const xcb_generic_event_t *genericEvent)
+{
+	xcb_motion_notify_event_t *mEv = (xcb_motion_notify_event_t *) genericEvent;
+#if 0
+	globals.sampleImage.dst.rect.x = mEv->event_x;
+	globals.sampleImage.dst.rect.y = mEv->event_y;
+
+	ui_xcb_Pixmap_render(&globals.mainArea, 0, 0);
+	ui_xcb_Image_render(&globals.sampleImage);
+	ui_xcb_Pixmap_render(&globals.doubleBuffer, 0, 0);
+#endif
+}
+
 void
 gemcx_xcb_EventResponse_response(const uint8_t responseType,
 		const xcb_generic_event_t *genericEvent)
@@ -366,6 +380,7 @@ gemcx_xcb_EventResponse_response(const uint8_t responseType,
 		[XCB_BUTTON_PRESS] = gemcx_xcb_EventResponse__buttonPress,
 		[XCB_KEY_PRESS] = gemcx_xcb_EventResponse__keyPress,
 		[XCB_KEY_RELEASE] = gemcx_xcb_EventResponse__keyRelease,
+		[XCB_MOTION_NOTIFY] = gemcx_xcb_EventResponse__motionNotify,
 	};
 
 	if (eventsResp[responseType] != NULL)

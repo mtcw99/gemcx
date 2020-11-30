@@ -91,11 +91,30 @@ gemcx_xcb_Globals_init(void)
 	globals.connectUrl.mainArea = &globals.mainArea;
 	globals.connectUrl.doubleBuffer = &globals.doubleBuffer;
 	globals.connectUrl.historyStack = &globals.historyStack;
+
+#if 0
+	ui_xcb_Image_init(&globals.sampleImage,
+			&globals.context,
+			globals.doubleBuffer.pixmap);
+	ui_xcb_Image_loadImage(&globals.sampleImage,
+			"/mnt/HDD_D/PICTURES/pc98/1598263592205.png");
+	ui_xcb_Image_resizeImage(&globals.sampleImage,
+			(const xcb_rectangle_t) {
+				.x = 50,
+				.y = 50,
+				.width = 640,
+				.height = 480
+			}, UI_XCB_IMAGE_KEEPASPECT_WIDTH);
+	ui_xcb_Image_createPixmap(&globals.sampleImage);
+#endif
 }
 
 void
 gemcx_xcb_Globals_deinit(void)
 {
+#if 0
+	ui_xcb_Image_deinit(&globals.sampleImage);
+#endif
 	protocol_HistoryStack_deinit(&globals.historyStack);
 
 	render_Xcb_deinit(&globals.pxcb);

@@ -37,6 +37,7 @@ src/ui/xcb/monitors.c
 src/ui/xcb/textInput.c
 src/ui/xcb/clipboard.c
 src/ui/xcb/menu.c
+src/ui/xcb/image.c
 src/util/memory.c
 src/util/socket.c
 src/util/stack.c
@@ -55,7 +56,7 @@ CFLAGS = -std=c99 -pedantic -Wall -D_POSIX_C_SOURCE=200809L
 CFLAGS_DEBUG = -O0 -g -DDEBUG
 CFLAGS_RELEASE = -Os -flto
 INCLUDEDIRS = -Iinclude/ -Ivendor/include/
-LIBS = -lssl -lcrypto -lxcb -lxcb-cursor -lxcb-icccm -lxcb-randr
+LIBS = -lm -lssl -lcrypto -lxcb -lxcb-cursor -lxcb-icccm -lxcb-randr -lxcb-image
 PKG = pangocairo fontconfig xkbcommon xkbcommon-x11
 PKGCFG = `pkg-config --libs --cflags ${PKG}`
 VERSION = 0.1
