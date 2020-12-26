@@ -129,48 +129,20 @@ bool
 gemcx_xcb_ControlBar_enterNotify(struct gemcx_xcb_ControlBar *controlBar,
 		const xcb_enter_notify_event_t *enterEv)
 {
-	if (ui_xcb_Button_hoverEnter(&controlBar->buttonMenu, enterEv))
-	{
-		return true;
-	}
-	else if (ui_xcb_Button_hoverEnter(&controlBar->buttonBack, enterEv))
-	{
-		return true;
-	}
-	else if (ui_xcb_Button_hoverEnter(&controlBar->buttonForward, enterEv))
-	{
-		return true;
-	}
-	else if (ui_xcb_Menu_hoverEnter(&controlBar->menu, enterEv))
-	{
-		return true;
-	}
-
-	return false;
+	return (ui_xcb_Button_hoverEnter(&controlBar->buttonMenu, enterEv) ||
+		ui_xcb_Button_hoverEnter(&controlBar->buttonBack, enterEv) ||
+		ui_xcb_Button_hoverEnter(&controlBar->buttonForward, enterEv) ||
+		ui_xcb_Menu_hoverEnter(&controlBar->menu, enterEv));
 }
 
 bool
 gemcx_xcb_ControlBar_leaveNotify(struct gemcx_xcb_ControlBar *controlBar,
 		const xcb_leave_notify_event_t *leaveEv)
 {
-	if (ui_xcb_Button_hoverLeave(&controlBar->buttonMenu, leaveEv))
-	{
-		return true;
-	}
-	else if (ui_xcb_Button_hoverLeave(&controlBar->buttonBack, leaveEv))
-	{
-		return true;
-	}
-	else if (ui_xcb_Button_hoverLeave(&controlBar->buttonForward, leaveEv))
-	{
-		return true;
-	}
-	else if (ui_xcb_Menu_hoverLeave(&controlBar->menu, leaveEv))
-	{
-		return true;
-	}
-
-	return false;
+	return (ui_xcb_Button_hoverLeave(&controlBar->buttonMenu, leaveEv) ||
+		ui_xcb_Button_hoverLeave(&controlBar->buttonBack, leaveEv) ||
+		ui_xcb_Button_hoverLeave(&controlBar->buttonForward, leaveEv) ||
+		ui_xcb_Menu_hoverLeave(&controlBar->menu, leaveEv));
 }
 
 bool
