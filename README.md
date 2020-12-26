@@ -1,4 +1,6 @@
 # gemcx
+NOTICE: This project is currently dormant.
+
 Gemini and Gopher protocols Client written in C99 + xcb
 
 ## Installation
@@ -19,5 +21,5 @@ $ make
 See **gemcx**(1).
 
 ## License
-Licensed under the MIT License
+Licensed under the GNU GPLv3 License
 
